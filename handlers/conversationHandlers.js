@@ -183,8 +183,6 @@ module.exports = (io, socket) => {
   };
 
   const getConversations = async ({ filter }) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     try {
       const pipeline = [
         {
@@ -358,19 +356,13 @@ module.exports = (io, socket) => {
       }
       const conversations = await ConversationModel.aggregate(pipeline);
 
-      await session.commitTransaction();
-      session.endSession();
       return socket.emit('conversations:set', { conversations });
     } catch (e) {
-      await session.abortTransaction();
-      session.endSession();
       socket.emit('error', { message: e.message });
     }
   };
 
   const getSearchedConversations = async ({ searchInput }) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     try {
       const pipeline = [
         {
@@ -527,22 +519,15 @@ module.exports = (io, socket) => {
           },
         },
       ];
-      const conversations = await ConversationModel.aggregate(pipeline).session(
-        session
-      );
-      await session.commitTransaction();
-      session.endSession();
+      const conversations = await ConversationModel.aggregate(pipeline);
+
       return socket.emit('conversations:setSearch', { conversations });
     } catch (e) {
-      await session.abortTransaction();
-      session.endSession();
       socket.emit('error', { message: e.message });
     }
   };
 
   const getOneConversation = async ({ selectedChatId }) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     try {
       const conversation = await ConversationModel.findOne({
         chat_id: selectedChatId,
@@ -550,21 +535,14 @@ module.exports = (io, socket) => {
         .populate('messages')
         .populate('user')
         .populate({ path: 'stage', select: '-conversations' })
-        .populate({ path: 'tags', select: '-conversations' })
-        .session(session);
-      await session.commitTransaction();
-      session.endSession();
+        .populate({ path: 'tags', select: '-conversations' });
       return socket.emit('conversations:setOne', { conversation });
     } catch (e) {
-      await session.abortTransaction();
-      session.endSession();
       socket.emit('error', { message: e.message });
     }
   };
 
   const updateStage = async ({ id, stageId }) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     console.log(id);
     try {
       await ConversationModel.updateOne(
@@ -572,9 +550,8 @@ module.exports = (io, socket) => {
           _id: new ObjectId(id),
         },
         { $set: { stage: new ObjectId(stageId), updatedAt: new Date() } }
-      ).session(session);
-      await session.commitTransaction();
-      session.endSession();
+      );
+
       const pipeline = [
         {
           $group: {
@@ -731,15 +708,12 @@ module.exports = (io, socket) => {
       return io.emit('conversation:update', { conversation: conversations[0] });
     } catch (e) {
       console.log(e);
-      await session.abortTransaction();
-      session.endSession();
+
       socket.emit('error', { message: e.message });
     }
   };
 
   const updateUser = async ({ id, userId }) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     try {
       await ConversationModel.updateOne(
         {
@@ -751,9 +725,8 @@ module.exports = (io, socket) => {
             updatedAt: new Date(),
           },
         }
-      ).session(session);
-      await session.commitTransaction();
-      session.endSession();
+      );
+
       const pipeline = [
         {
           $group: {
@@ -910,16 +883,14 @@ module.exports = (io, socket) => {
       return io.emit('conversation:update', { conversation: conversations[0] });
     } catch (e) {
       console.log(e);
-      await session.abortTransaction();
-      session.endSession();
+
       socket.emit('error', { message: e.message });
     }
   };
 
   const updateTags = async ({ id, tags }) => {
     console.log(id, tags);
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
+
     try {
       await ConversationModel.updateOne(
         {
@@ -932,9 +903,8 @@ module.exports = (io, socket) => {
             updatedAt: new Date(),
           },
         }
-      ).session(session);
-      await session.commitTransaction();
-      session.endSession();
+      );
+
       const pipeline = [
         {
           $group: {
@@ -1091,25 +1061,19 @@ module.exports = (io, socket) => {
       return io.emit('conversation:update', { conversation: conversations[0] });
     } catch (e) {
       console.log(e);
-      await session.abortTransaction();
-      session.endSession();
+
       socket.emit('error', { message: e.message });
     }
     await getOneConversation({ id });
   };
 
   const createTag = async ({ id, value }) => {
-    const session = await TagModel.startSession();
-    session.startTransaction();
     try {
       const tag = await TagModel.create({ value: value });
       await ConversationModel.updateOne(
         { _id: id },
         { $push: { tags: tag._id }, $set: { updatedAt: new Date() } }
-      ).session(session);
-
-      await session.commitTransaction();
-      session.endSession();
+      );
 
       const pipeline = [
         {
@@ -1270,8 +1234,7 @@ module.exports = (io, socket) => {
       return io.emit('tags:set', { tags });
     } catch (e) {
       console.log(e);
-      await session.abortTransaction();
-      session.endSession();
+
       socket.emit('error', { message: e.message });
     }
   };
@@ -1281,8 +1244,6 @@ module.exports = (io, socket) => {
   };
 
   const sendMessage = async ({ id, text, type, user }) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     try {
       const conversation = await ConversationModel.findOne({
         _id: id,
@@ -1308,13 +1269,11 @@ module.exports = (io, socket) => {
         { _id: { $in: messageIds } },
         { unread: false }
       );
-      await session.commitTransaction();
-      session.endSession();
+
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
-      await session.abortTransaction();
-      session.endSession();
+
       socket.emit('error', { message: e.message });
     }
   };

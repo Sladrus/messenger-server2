@@ -202,8 +202,6 @@ module.exports = (bot, io) => {
   };
 
   const updateStage = async (msg) => {
-    const session = await ConversationModel.startSession();
-    session.startTransaction();
     try {
       let conversation = await ConversationModel.findOne({
         chat_id: Number(msg.chat.id),
@@ -270,12 +268,8 @@ module.exports = (bot, io) => {
           console.log(e);
         }
       }
-      await session.commitTransaction();
-      session.endSession();
     } catch (e) {
       console.log(e);
-      await session.abortTransaction();
-      session.endSession();
     }
   };
 
