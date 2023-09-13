@@ -23,7 +23,7 @@ module.exports = (io, socket) => {
       await tokenService.saveToken(user._id, refreshToken);
 
       // Emit the event with the extracted user data
-      return io.emit('user', { user: userData, token: accessToken });
+      return socket.emit('user', { user: userData, token: accessToken });
     } catch (e) {
       console.log(e);
 
