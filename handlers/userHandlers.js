@@ -15,7 +15,7 @@ module.exports = (io, socket) => {
       // Extract necessary information from the user object to avoid circular references
       const userData = {
         id: user._id,
-        name: user.name,
+        name: user.username,
         email: user.email,
         // Add any other required properties
       };
