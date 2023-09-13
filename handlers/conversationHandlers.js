@@ -1369,6 +1369,30 @@ module.exports = (io, socket) => {
     }
   };
 
+  const read = async ({ id }) => {
+    try {
+      const conversation = await ConversationModel.findOne({
+        _id: new ObjectId(id),
+      });
+      await ConversationModel.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: { unreadCount: 0 },
+        }
+      );
+      const messages = conversation.messages;
+      const messageIds = messages?.map((message) => message._id);
+      await MessageModel.updateMany(
+        { _id: { $in: messageIds } },
+        { unread: false }
+      );
+      return await findOneConversation(id);
+    } catch (e) {
+      console.log(e);
+      socket.emit('error', { message: e.message });
+    }
+  };
+
   socket.on('conversations:get', getConversations);
   socket.on('conversations:getSearch', getSearchedConversations);
   socket.on('conversations:getOne', getOneConversation);
@@ -1379,6 +1403,7 @@ module.exports = (io, socket) => {
   socket.on('conversation:createTag', createTag);
   socket.on('conversation:createComment', createComment);
   socket.on('conversation:createMoneysend', createMoneysend);
+  socket.on('conversation:read', read);
 
   socket.on('message:sendMessage', sendMessage);
 };
