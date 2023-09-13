@@ -179,6 +179,7 @@ module.exports = (bot, io) => {
         {
           $push: { messages: message._id },
           $set: {
+            title: msg.chat.title,
             updatedAt: new Date(),
             unreadCount: conversation?.unreadCount
               ? conversation?.unreadCount + 1
