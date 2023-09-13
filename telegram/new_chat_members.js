@@ -226,6 +226,7 @@ module.exports = (bot, io) => {
             },
             {
               $set: {
+                title: conversation.title,
                 stage: new ObjectId(stage._id),
                 workAt: Date.now(),
                 updatedAt: Date.now(),
