@@ -178,27 +178,31 @@ const findOneConversation = async (id, io) => {
 const createMessage = async (event, io) => {
   const message = event.message;
   const sender = await message.getSender();
-  console.log(sender, message);
+  // console.log(sender, message);
   const chat_id = parseInt(sender.id.value);
   const peer_id = parseInt(message.peerId.userId.value);
 
   // if (chat_id === 6366507760) {
   //   return;
   // }
+  const user = await client.getMe();
+  const user_id = parseInt(user.id.value);
+  console.log(chat_id, peer_id, user_id);
 
   try {
     let conversation = await ConversationModel.findOne({
-      chat_id: chat_id === 6366507760 ? peer_id : chat_id,
+      chat_id: chat_id === user_id ? peer_id : chat_id,
     });
+    console.log(conversation);
     const stage = await StageModel.findOne({ value: 'raw' });
     if (!conversation) {
       const newConversation = await ConversationModel.create({
         title:
-          chat_id === 6366507760
+          chat_id === user_id
             ? peer_id
             : sender?.firstName +
               (sender?.lastName ? ' ' + sender?.lastName : ''),
-        chat_id: chat_id === 6366507760 ? peer_id : chat_id,
+        chat_id: chat_id === user_id ? peer_id : chat_id,
         unreadCount: 0,
         type: 'private',
         stage: stage._id,
@@ -250,6 +254,11 @@ const createMessage = async (event, io) => {
       {
         $push: { messages: createdMessage._id },
         $set: {
+          title:
+            chat_id === user_id
+              ? peer_id
+              : sender?.firstName +
+                (sender?.lastName ? ' ' + sender?.lastName : ''),
           updatedAt: new Date(),
           unreadCount: conversation?.unreadCount
             ? conversation?.unreadCount + 1
