@@ -3,9 +3,10 @@ const { ConversationModel } = require('../models/conversationModel');
 const { MessageModel } = require('../models/messageModel');
 const { TagModel } = require('../models/tagModel');
 const { TaskTypeModel } = require('../models/taskTypeModel');
-const { bot, botSendMessage, exportLink } = require('../telegram');
+const { bot, botSendMessage, exportLink } = require('../bot');
 const { default: axios } = require('axios');
 const { StageModel } = require('../models/stageModel');
+const { telegramSendMessage } = require('../telegram');
 const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
@@ -18,6 +19,15 @@ const baseApi = axios.create({
 async function createMoneysendApi(body) {
   try {
     const response = await baseApi.post(`/task/moneysend`, body);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function sendChatApi() {
+  try {
+    const response = await baseApi.get(`/chat/empty`);
     return response.data;
   } catch (error) {
     console.log(error);
@@ -339,6 +349,14 @@ module.exports = (io, socket) => {
         const tagIds = filter.tags.map((tag) => new ObjectId(tag._id));
         pipeline.unshift({ $match: { tags: { $in: tagIds } } });
       }
+      if (filter?.type && filter.type !== 'all') {
+        if (filter?.type === 'private')
+          pipeline.unshift({ $match: { type: 'private' } });
+        else
+          pipeline.unshift({
+            $match: { type: { $in: ['group', 'supergroup'] } },
+          });
+      }
       if (filter.dateRange) {
         const startDate = filter.dateRange?.startDate
           ? new Date(filter.dateRange.startDate)
@@ -358,6 +376,7 @@ module.exports = (io, socket) => {
 
       return socket.emit('conversations:set', { conversations });
     } catch (e) {
+      console.log(e);
       socket.emit('error', { message: e.message });
     }
   };
@@ -1248,14 +1267,38 @@ module.exports = (io, socket) => {
       const conversation = await ConversationModel.findOne({
         _id: id,
       });
-      const botMessage = await botSendMessage(conversation?.chat_id, text);
+      let botMessage;
+      let dtoMessage;
 
-      botMessage.type = type;
-      botMessage.from.id = user._id;
-      botMessage.from.first_name = user.username;
-      botMessage.unread = false;
+      if (conversation.type === 'private') {
+        botMessage = await telegramSendMessage(conversation?.chat_id, text);
+        dtoMessage = {
+          message_id: botMessage.id,
+          from: {
+            id: user._id,
+            first_name: user.username,
+            is_bot: true,
+          },
+          chat: {
+            id: conversation?.chat_id,
+            type: 'private',
+          },
+          date: botMessage.date,
+          text: botMessage.message,
+          type: 'text',
+          unread: false,
+        };
+      } else {
+        dtoMessage = await botSendMessage(conversation?.chat_id, text);
+        dtoMessage.type = type;
+        dtoMessage.from.id = user._id;
+        dtoMessage.from.first_name = user.username;
+        dtoMessage.unread = false;
+      }
 
-      const message = await MessageModel.create(botMessage);
+      const message = await MessageModel.create(dtoMessage);
+      console.log(message);
+
       await ConversationModel.updateOne(
         { _id: id },
         {
@@ -1393,6 +1436,29 @@ module.exports = (io, socket) => {
     }
   };
 
+  const sendChat = async ({ id, user }) => {
+    try {
+      const conversation = await ConversationModel.findOne({
+        _id: id,
+      });
+      const chat = await sendChatApi();
+      // const chat = {
+      //   id: 5230,
+      //   chat_url: 'Ссылка на чат: https://t.me/+V8lzItXiiqFmYzIy',
+      //   active: 1,
+      //   chat_id: '-1001830593304',
+      //   issued_by: 'chat',
+      //   date_of_issue: '2023-09-19 15:16:41',
+      // };
+
+      return await sendMessage({ id, text: chat.chat_url, type: 'text', user });
+    } catch (e) {
+      console.log(e);
+
+      socket.emit('error', { message: e.message });
+    }
+  };
+
   socket.on('conversations:get', getConversations);
   socket.on('conversations:getSearch', getSearchedConversations);
   socket.on('conversations:getOne', getOneConversation);
@@ -1404,6 +1470,7 @@ module.exports = (io, socket) => {
   socket.on('conversation:createComment', createComment);
   socket.on('conversation:createMoneysend', createMoneysend);
   socket.on('conversation:read', read);
+  socket.on('conversation:sendChat', sendChat);
 
   socket.on('message:sendMessage', sendMessage);
 };

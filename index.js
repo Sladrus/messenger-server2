@@ -8,7 +8,10 @@ const { jwtMiddleware } = require('./middleware/jwtMiddleware');
 const { registerHandlers } = require('./handlers');
 
 const { default: mongoose } = require('mongoose');
-const { registerBotHandlers } = require('./telegram');
+const { registerBotHandlers } = require('./bot');
+const registerTelegramHandlers = require('./telegram');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(
@@ -19,6 +22,21 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(express.static('photos'));
+
+app.get('/photo/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'telegram', 'photos', filename);
+
+  // Check if the file exists before sending
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).send('Файл не найден');
+  }
+});
+
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
@@ -32,6 +50,7 @@ const io = new Server(httpServer, {
 io.use(jwtMiddleware);
 
 registerBotHandlers(io);
+registerTelegramHandlers.initClient(io);
 
 const onConnection = (socket) => {
   console.log('HRE');

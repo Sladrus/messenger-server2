@@ -15,6 +15,12 @@ var stageSchema = new Schema({
     required: true,
     unique: true,
   },
+  type: {
+    type: String,
+    required: true,
+    unique: true,
+    default: 'group',
+  },
   position: { type: Number, required: true, default: 0 },
   conversations: [
     {
@@ -33,6 +39,7 @@ const defaultStages = [
     color: 'white',
     value: 'ready',
     position: 0,
+    type: 'group',
   },
   {
     label: 'Необработанные чаты',
@@ -40,6 +47,7 @@ const defaultStages = [
     color: 'dodgerblue',
     value: 'raw',
     position: 0,
+    type: 'all',
   },
   {
     label: 'В работе',
@@ -47,6 +55,7 @@ const defaultStages = [
     color: 'gold',
     value: 'work',
     position: 0,
+    type: 'group',
   },
   {
     label: 'Активированные',
@@ -54,6 +63,7 @@ const defaultStages = [
     color: 'limegreen',
     value: 'active',
     position: 0,
+    type: 'group',
   },
   {
     label: 'Есть задача',
@@ -61,6 +71,7 @@ const defaultStages = [
     color: 'brown',
     value: 'task',
     position: 0,
+    type: 'group',
   },
 ];
 
