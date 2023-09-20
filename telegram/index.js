@@ -9,6 +9,7 @@ const { default: mongoose } = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const { botSendMessage } = require('../bot');
 
 require('dotenv').config();
 
@@ -195,7 +196,19 @@ const createMessage = async (event, io) => {
     });
     console.log(conversation);
     const stage = await StageModel.findOne({ value: 'raw' });
+    //-1001955007812
     if (!conversation) {
+      await botSendMessage(
+        -1001955007812,
+        `Пользователь ${
+          sender?.firstName + (sender?.lastName ? ' ' + sender?.lastName : '')
+        } написал первое сообщение.\n\n<b>${
+          message?.message
+        }</b>\n\nUser ID: ${chat_id}\nUsername: ${
+          sender?.username ? '@' + sender?.username : 'Отсутствует'
+        }`,
+        { parse_mode: 'HTML' }
+      );
       const newConversation = await ConversationModel.create({
         title:
           chat_id === user_id
