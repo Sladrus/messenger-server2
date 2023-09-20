@@ -1438,9 +1438,15 @@ module.exports = (io, socket) => {
 
   const sendChat = async ({ id, user }) => {
     try {
+      const stage = await StageModel.findOne({ value: 'created_chat' });
+      await ConversationModel.updateOne(
+        { _id: id },
+        { $set: { updatedAt: new Date(), stage: stage._id } }
+      );
       const conversation = await ConversationModel.findOne({
         _id: id,
       });
+
       const chat = await sendChatApi();
       // const chat = {
       //   id: 5230,
