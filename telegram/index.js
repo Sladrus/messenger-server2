@@ -194,7 +194,10 @@ const createMessage = async (event, io) => {
     if (!conversation) {
       const newConversation = await ConversationModel.create({
         title:
-          sender?.firstName + (sender?.lastName ? ' ' + sender?.lastName : ''),
+          chat_id === 6366507760
+            ? peer_id
+            : sender?.firstName +
+              (sender?.lastName ? ' ' + sender?.lastName : ''),
         chat_id: chat_id === 6366507760 ? peer_id : chat_id,
         unreadCount: 0,
         type: 'private',
