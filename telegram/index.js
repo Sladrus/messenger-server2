@@ -249,21 +249,29 @@ const createMessage = async (event, io) => {
     }
 
     const createdMessage = await MessageModel.create(msg);
+    const set =
+      chat_id === user_id
+        ? {
+            updatedAt: new Date(),
+            unreadCount: conversation?.unreadCount
+              ? conversation?.unreadCount + 1
+              : 1,
+          }
+        : {
+            title:
+              sender?.firstName +
+              (sender?.lastName ? ' ' + sender?.lastName : ''),
+            updatedAt: new Date(),
+            unreadCount: conversation?.unreadCount
+              ? conversation?.unreadCount + 1
+              : 1,
+          };
+
     await ConversationModel.updateOne(
       { _id: conversation?._id },
       {
         $push: { messages: createdMessage._id },
-        $set: {
-          title:
-            chat_id === user_id
-              ? peer_id
-              : sender?.firstName +
-                (sender?.lastName ? ' ' + sender?.lastName : ''),
-          updatedAt: new Date(),
-          unreadCount: conversation?.unreadCount
-            ? conversation?.unreadCount + 1
-            : 1,
-        },
+        $set: set,
       }
     );
 
