@@ -1,9 +1,29 @@
 const { default: mongoose } = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
+require('dotenv').config();
 
 const { ConversationModel } = require('../models/conversationModel');
 const { MessageModel } = require('../models/messageModel');
 const { StageModel } = require('../models/stageModel');
+const { default: axios } = require('axios');
+
+const token = process.env.API_TOKEN;
+const officeToken = process.env.OFFICE_TOKEN;
+const officeApi = axios.create({
+  baseURL: 'http://app.moneyport.ru/office',
+  headers: { 'x-api-key': `${token}` },
+});
+
+async function getOrder(chat_id) {
+  try {
+    const response = await officeApi.get(
+      `/order?chat_id=${chat_id}&api_key=${officeToken}`
+    );
+    return response.data;
+  } catch (error) {
+    return;
+  }
+}
 
 module.exports = (bot, io) => {
   const findOneConversation = async (id) => {
@@ -173,12 +193,18 @@ module.exports = (bot, io) => {
       if (!conversation) {
         return;
       }
+      const order = await getOrder(Number(msg.chat.id));
+
       const fullName = msg.new_chat_member?.last_name
         ? msg.new_chat_member.first_name + ' ' + msg.new_chat_member?.last_name
         : msg.new_chat_member.first_name;
 
       msg.type = 'event';
-      msg.text = `Пользователь ${fullName} вошел в чат.`;
+      msg.text = `Пользователь ${fullName} вошел в чат. ${
+        !conversation?.members?.length && order && order['how_to_send']
+          ? `\n1. Хотите совершить перевод: ${order['how_to_send']} \n2. Валюта получения: ${order['symbol']}\n3. Сумма к получению: ${order['summ']}`
+          : ''
+      }`;
       msg.unread = true;
 
       const message = await MessageModel.create(msg);

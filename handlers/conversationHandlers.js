@@ -1258,6 +1258,26 @@ module.exports = (io, socket) => {
     }
   };
 
+  const removeTag = async ({ id }) => {
+    try {
+      const tag = await TagModel.findOne({ _id: id });
+      const conversations = await ConversationModel.find({ tags: tag });
+      if (conversations.length > 0) {
+        throw new Error(
+          'Есть чаты с таким тегом. Сначала уберите тег с чата, чтобы удалить тег.'
+        );
+      }
+      await TagModel.deleteOne({ _id: id });
+
+      const tags = await TagModel.find();
+      return io.emit('tags:set', { tags });
+    } catch (e) {
+      console.log(e);
+
+      socket.emit('error', { message: e.message });
+    }
+  };
+
   const createComment = async ({ id, value }) => {
     await getOneConversation({ selectedChatId: id });
   };
@@ -1473,6 +1493,8 @@ module.exports = (io, socket) => {
   socket.on('conversation:updateUser', updateUser);
   socket.on('conversation:updateTags', updateTags);
   socket.on('conversation:createTag', createTag);
+  socket.on('conversation:removeTag', removeTag);
+
   socket.on('conversation:createComment', createComment);
   socket.on('conversation:createMoneysend', createMoneysend);
   socket.on('conversation:read', read);
