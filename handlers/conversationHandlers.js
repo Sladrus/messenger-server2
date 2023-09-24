@@ -1459,24 +1459,36 @@ module.exports = (io, socket) => {
   const sendChat = async ({ id, user }) => {
     try {
       const stage = await StageModel.findOne({ value: 'created_chat' });
+      const tag = await TagModel.findOne({ value: 'Личка' });
       await ConversationModel.updateOne(
         { _id: id },
-        { $set: { updatedAt: new Date(), stage: stage._id } }
+        {
+          $set: { updatedAt: new Date(), stage: stage._id },
+        }
       );
-      const conversation = await ConversationModel.findOne({
-        _id: id,
-      });
 
       const chat = await sendChatApi();
       // const chat = {
       //   id: 5230,
       //   chat_url: 'Ссылка на чат: https://t.me/+V8lzItXiiqFmYzIy',
       //   active: 1,
-      //   chat_id: '-1001830593304',
+      //   chat_id: '-1001806491854',
       //   issued_by: 'chat',
       //   date_of_issue: '2023-09-19 15:16:41',
       // };
+      const conversation = await ConversationModel.findOne({
+        chat_id: Number(chat?.chat_id),
+      });
 
+      if (!conversation.tags.includes(tag._id)) {
+        await ConversationModel.updateOne(
+          { chat_id: Number(chat?.chat_id) },
+          {
+            $set: { updatedAt: new Date() },
+            $push: { tags: tag._id },
+          }
+        );
+      }
       return await sendMessage({ id, text: chat.chat_url, type: 'text', user });
     } catch (e) {
       console.log(e);
