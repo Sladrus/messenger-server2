@@ -1489,7 +1489,12 @@ module.exports = (io, socket) => {
           }
         );
       }
-      return await sendMessage({ id, text: chat.chat_url, type: 'text', user });
+      return await sendMessage({
+        id,
+        text: `Личный кабинет Moneyport #${chat.id}: ${chat.chat_url}`,
+        type: 'text',
+        user,
+      });
     } catch (e) {
       console.log(e);
 
