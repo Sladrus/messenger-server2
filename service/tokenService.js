@@ -1,14 +1,15 @@
 const { TokenModel } = require('../models/tokenModel');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 class TokenService {
   async generateToken(user) {
     const payload = { ...user.toObject() };
 
-    const accessToken = jwt.sign(payload, 'secret', {
+    const accessToken = jwt.sign(payload, process.env.SECRET, {
       expiresIn: '10d',
     });
-    const refreshToken = jwt.sign(payload, 'secret', {
+    const refreshToken = jwt.sign(payload, process.env.SECRET, {
       expiresIn: '30d',
     });
 
