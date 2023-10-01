@@ -1427,6 +1427,7 @@ module.exports = (io, socket) => {
 
   const sendMessage = async ({ id, text, type, user }) => {
     try {
+      return;
       const conversation = await ConversationModel.findOne({
         _id: id,
       });
