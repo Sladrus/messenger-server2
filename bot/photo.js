@@ -28,6 +28,7 @@ module.exports = (bot, io) => {
           stage: '$conversation.stage',
           user: '$conversation.user',
           tags: '$conversation.tags',
+          tasks: '$conversation.tasks',
         },
       },
       {
@@ -78,6 +79,62 @@ module.exports = (bot, io) => {
         },
       },
       {
+        $lookup: {
+          from: 'tasks',
+          localField: 'tasks',
+          foreignField: '_id',
+          as: 'tasks',
+        },
+      },
+      {
+        $unwind: {
+          path: '$tasks',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'tasks',
+          localField: 'lastMessage.task',
+          foreignField: '_id',
+          as: 'messageTask',
+        },
+      },
+      {
+        $unwind: {
+          path: '$messageTask',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'task_types',
+          localField: 'messageTask.type',
+          foreignField: '_id',
+          as: 'messageTask.type',
+        },
+      },
+      {
+        $unwind: {
+          path: '$messageTask.type',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'task_types',
+          localField: 'tasks.type',
+          foreignField: '_id',
+          as: 'tasks.type',
+        },
+      },
+      {
+        $unwind: {
+          path: '$tasks.type',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $group: {
           _id: '$_id',
           title: {
@@ -113,6 +170,12 @@ module.exports = (bot, io) => {
           tags: {
             $addToSet: '$tags',
           },
+          tasks: {
+            $addToSet: '$tasks',
+          },
+          messageTask: {
+            $first: '$messageTask',
+          },
         },
       },
       {
@@ -135,7 +198,9 @@ module.exports = (bot, io) => {
           },
         },
       },
-      { $sort: { updatedAt: -1 } },
+      {
+        $sort: { updatedAt: -1 },
+      },
       {
         $project: {
           _id: 1,
@@ -146,7 +211,12 @@ module.exports = (bot, io) => {
           createdAt: 1,
           updatedAt: 1,
           workAt: 1,
-          lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+          lastMessage: {
+            $mergeObjects: [
+              { $arrayElemAt: ['$lastMessage', 0] }, // Extract the first element
+              { task: '$messageTask' }, // Nest the task field inside lastMessage
+            ],
+          },
           stage: {
             _id: '$stage._id',
             value: '$stage.value',
@@ -155,6 +225,7 @@ module.exports = (bot, io) => {
           },
           user: 1,
           tags: 1,
+          tasks: 1,
         },
       },
     ];
