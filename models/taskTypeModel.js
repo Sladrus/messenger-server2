@@ -7,4 +7,10 @@ var taskTypeSchema = new Schema({
 
 const TaskTypeModel = mongoose.model('task_type', taskTypeSchema);
 
+const defaultType = {
+  title: 'Test',
+};
+
+TaskTypeModel.create(defaultType).catch((e) => console.log(e));
+
 module.exports = { TaskTypeModel };

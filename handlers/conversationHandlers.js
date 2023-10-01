@@ -7,6 +7,7 @@ const { bot, botSendMessage, exportLink } = require('../bot');
 const { default: axios } = require('axios');
 const { StageModel } = require('../models/stageModel');
 const { telegramSendMessage } = require('../telegram');
+const { TaskModel } = require('../models/taskModel');
 const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
@@ -546,15 +547,38 @@ module.exports = (io, socket) => {
     }
   };
 
+  const getOneTask = async ({ id }) => {
+    try {
+      const task = await TaskModel.findOne({ _id: id })
+        .populate('conversation')
+        .populate('type');
+      io.emit('task:update', { task });
+    } catch (e) {
+      socket.emit('error', { message: e.message });
+    }
+  };
+
   const getOneConversation = async ({ selectedChatId }) => {
     try {
       const conversation = await ConversationModel.findOne({
         chat_id: selectedChatId,
       })
-        .populate('messages')
-        .populate('user')
+        .populate({
+          path: 'messages',
+          populate: { path: 'task', populate: { path: 'type' } },
+        })
+        .populate({
+          path: 'user',
+        })
         .populate({ path: 'stage', select: '-conversations' })
-        .populate({ path: 'tags', select: '-conversations' });
+        .populate({ path: 'tags', select: '-conversations' })
+        .populate({
+          path: 'tasks',
+          select: '-conversation',
+          populate: { path: 'type' },
+        });
+      console.log(conversation?.tasks);
+
       return socket.emit('conversations:setOne', { conversation });
     } catch (e) {
       socket.emit('error', { message: e.message });
@@ -728,6 +752,72 @@ module.exports = (io, socket) => {
     } catch (e) {
       console.log(e);
 
+      socket.emit('error', { message: e.message });
+    }
+  };
+
+  const editStage = async ({ id, stage }) => {
+    try {
+      await StageModel.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        { $set: stage }
+      );
+      const stages = await StageModel.find().sort({ position: 1 });
+
+      return io.emit('stages:set', { stages });
+    } catch (e) {
+      console.log(e);
+      socket.emit('error', { message: e.message });
+    }
+  };
+
+  const deleteStage = async ({ id, stage }) => {
+    try {
+      const conversationsWithStage = await ConversationModel.find({ stage });
+
+      if (conversationsWithStage.length > 0) {
+        throw new Error('Нельзя удалить, так как есть чаты с этим статусом.');
+      }
+      await StageModel.deleteOne({
+        _id: new ObjectId(id),
+      });
+      const stages = await StageModel.find().sort({ position: 1 });
+
+      return io.emit('stages:set', { stages });
+    } catch (e) {
+      console.log(e);
+      socket.emit('error', { message: e.message });
+    }
+  };
+
+  const moveStage = async ({ id, position }) => {
+    try {
+      const totalRecords = await StageModel.count();
+
+      if (position < 0 || position >= totalRecords) {
+        throw new Error('Неверная позиция');
+      }
+      const recordToMove = await StageModel.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!recordToMove) {
+        throw new Error('Такой записи не существует');
+      }
+      const currentPosition = recordToMove.position;
+      await StageModel.updateOne(
+        { position },
+        { $set: { position: currentPosition } }
+      );
+      recordToMove.position = position;
+      await recordToMove.save();
+
+      const stages = await StageModel.find().sort({ position: 1 });
+
+      return io.emit('stages:set', { stages });
+    } catch (e) {
+      console.log(e);
       socket.emit('error', { message: e.message });
     }
   };
@@ -908,8 +998,6 @@ module.exports = (io, socket) => {
   };
 
   const updateTags = async ({ id, tags }) => {
-    console.log(id, tags);
-
     try {
       await ConversationModel.updateOne(
         {
@@ -1282,6 +1370,61 @@ module.exports = (io, socket) => {
     await getOneConversation({ selectedChatId: id });
   };
 
+  const createTask = async ({ id, data }) => {
+    try {
+      const conversation = await ConversationModel.findOne({ chat_id: id });
+      let type = await TaskTypeModel.findOne({ title: data?.type });
+      if (!type) {
+        type = await TaskTypeModel.create({ title: data?.type });
+      }
+      const task = await TaskModel.create({
+        ...data,
+        type,
+        conversation,
+        createdAt: new Date(),
+      });
+      await ConversationModel.updateOne(
+        { chat_id: id },
+        { $push: { tasks: task._id }, $set: { updatedAt: new Date() } }
+      );
+      const message = {
+        type: 'task',
+        task: task,
+        unread: false,
+        date: new Date(),
+      };
+
+      const createdMessage = await MessageModel.create(message);
+
+      await ConversationModel.updateOne(
+        { chat_id: id },
+        {
+          $push: { messages: createdMessage._id },
+          $set: {
+            updatedAt: new Date(),
+          },
+        }
+      );
+      await getOneTask({ id: task?._id });
+      await getOneConversation({ selectedChatId: id });
+    } catch (e) {
+      socket.emit('error', { message: e.message });
+    }
+  };
+
+  const doneTask = async ({ id }) => {
+    try {
+      const task = await TaskModel.findOne({ _id: id }).populate(
+        'conversation'
+      );
+      await TaskModel.updateOne({ _id: id }, { $set: { done: true } });
+      await getOneTask({ id: task?._id });
+      await getOneConversation({ selectedChatId: task?.conversation.chat_id });
+    } catch (e) {
+      socket.emit('error', { message: e.message });
+    }
+  };
+
   const sendMessage = async ({ id, text, type, user }) => {
     try {
       const conversation = await ConversationModel.findOne({
@@ -1507,12 +1650,19 @@ module.exports = (io, socket) => {
   socket.on('conversations:getOne', getOneConversation);
 
   socket.on('conversation:updateStage', updateStage);
+  socket.on('conversation:editStage', editStage);
+  socket.on('conversation:deleteStage', deleteStage);
+  socket.on('conversation:moveStage', moveStage);
+
   socket.on('conversation:updateUser', updateUser);
   socket.on('conversation:updateTags', updateTags);
   socket.on('conversation:createTag', createTag);
   socket.on('conversation:removeTag', removeTag);
 
   socket.on('conversation:createComment', createComment);
+  socket.on('conversation:createTask', createTask);
+  socket.on('conversation:doneTask', doneTask);
+
   socket.on('conversation:createMoneysend', createMoneysend);
   socket.on('conversation:read', read);
   socket.on('conversation:sendChat', sendChat);

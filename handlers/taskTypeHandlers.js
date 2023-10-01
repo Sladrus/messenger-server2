@@ -11,11 +11,10 @@ module.exports = (io, socket) => {
     }
   };
 
-  const createTaskType = async ({ id, value }) => {
+  const createTaskType = async ({ value }) => {
     console.log(value);
     try {
       const type = await TaskTypeModel.create({ title: value });
-
       return await getTaskTypes();
     } catch (e) {
       console.log(e);

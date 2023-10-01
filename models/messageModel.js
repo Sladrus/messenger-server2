@@ -13,6 +13,7 @@ var messageSchema = new Schema({
     type: Number,
     required: true,
   },
+  task: { type: Schema.Types.ObjectId, ref: 'task' },
   photo: [],
   text: {
     type: String,
