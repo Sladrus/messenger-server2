@@ -235,27 +235,35 @@ module.exports = (bot, io) => {
       },
     ];
     const conversations = await ConversationModel.aggregate(pipeline);
+    console.log(conversations[0]);
     return io.emit('conversation:update', { conversation: conversations[0] });
   };
 
-  const createMessage = async (msg) => {
+  const gradeType = (grade) => {
+    if (grade === 'low') return 'Плохо';
+    if (grade === 'middle') return 'Нормально';
+    if (grade === 'high') return 'Хорошо';
+  };
+
+  const createMessage = async (msg, grade) => {
     try {
       const conversation = await ConversationModel.findOne({
-        chat_id: Number(msg.migrate_to_chat_id),
+        chat_id: Number(msg.chat.id),
       });
       if (!conversation) {
         return;
       }
-      msg.type = 'event';
-      msg.text = `Чат "${msg.chat.title}" стал супергруппой`;
+      msg.type = 'text';
       msg.unread = true;
-
+      msg.text = `Оценка: ${gradeType(grade)}`;
       const message = await MessageModel.create(msg);
       await ConversationModel.updateOne(
         { _id: conversation?._id },
         {
           $push: { messages: message._id },
           $set: {
+            title: msg.chat.title,
+            grade: grade,
             updatedAt: new Date(),
             unreadCount: conversation?.unreadCount
               ? conversation?.unreadCount + 1
@@ -269,28 +277,15 @@ module.exports = (bot, io) => {
     }
   };
 
-  const updateConversation = async (msg) => {
-    try {
-      await ConversationModel.updateOne(
-        {
-          chat_id: Number(msg.chat.id),
-        },
-        {
-          $set: {
-            chat_id: msg.migrate_to_chat_id,
-            type: 'supergroup',
-            updatedAt: new Date(),
-          },
-        }
-      );
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  bot.on('migrate_to_chat_id', async (msg) => {
-    console.log(msg);
-    await updateConversation(msg);
-    await createMessage(msg);
+  bot.on('callback_query', async (query) => {
+    console.log(query);
+    const chatId = query.message.chat.id;
+    query.message.from = query.from;
+    const msg = query.message;
+    const grade = query.data.split('_')[1];
+    await createMessage(msg, grade);
+    await bot.deleteMessage(chatId, msg.message_id);
+    await bot.sendMessage(chatId, 'Спасибо за Ваше обращение! ');
+    return await bot.answerCallbackQuery(query.id);
   });
 };

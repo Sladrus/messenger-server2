@@ -35,6 +35,9 @@ var conversationSchema = new Schema({
   type: {
     type: String,
   },
+  grade: {
+    type: String,
+  },
 });
 
 const ConversationModel = mongoose.model('conversation', conversationSchema);

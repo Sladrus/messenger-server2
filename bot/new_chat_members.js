@@ -14,11 +14,24 @@ const officeApi = axios.create({
   headers: { 'x-api-key': `${token}` },
 });
 
+const screenApi = axios.create({
+  baseURL: 'http://client.1210059-cn07082.tw1.ru',
+});
+
 async function getOrder(chat_id) {
   try {
     const response = await officeApi.get(
       `/order?chat_id=${chat_id}&api_key=${officeToken}`
     );
+    return response.data;
+  } catch (error) {
+    return;
+  }
+}
+
+async function checkUser(username) {
+  try {
+    const response = await screenApi.post(`/screening`, { tgName: username });
     return response.data;
   } catch (error) {
     return;
@@ -48,6 +61,7 @@ module.exports = (bot, io) => {
           lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
           stage: '$conversation.stage',
           user: '$conversation.user',
+          grade: '$conversation.grade',
           tags: '$conversation.tags',
           tasks: '$conversation.tasks',
         },
@@ -188,6 +202,9 @@ module.exports = (bot, io) => {
           user: {
             $first: '$user',
           },
+          grade: {
+            $first: '$grade',
+          },
           tags: {
             $addToSet: '$tags',
           },
@@ -245,6 +262,7 @@ module.exports = (bot, io) => {
             color: '$stage.color',
           },
           user: 1,
+          grade: 1,
           tags: 1,
           tasks: 1,
         },
@@ -330,6 +348,10 @@ module.exports = (bot, io) => {
               },
             }
           );
+          if (msg.new_chat_member?.username) {
+            const response = await checkUser(msg.new_chat_member?.username);
+            console.log(response);
+          }
           await bot.sendMessage(
             -1001955007812,
             `Пользователь ${
@@ -363,7 +385,7 @@ module.exports = (bot, io) => {
             }
           );
         } catch (e) {
-          console.log(e);
+          // console.log(e);
         }
       }
     } catch (e) {

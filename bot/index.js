@@ -9,6 +9,7 @@ const registerLeftMemberHandler = require('./left_chat_member');
 const registerNewMemberHandler = require('./new_chat_members');
 const registerChatCreatedHandler = require('./group_chat_created');
 const registerNewTitleHandler = require('./new_chat_title');
+const registerCallbackHandler = require('./callback_query');
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
@@ -22,6 +23,7 @@ function registerBotHandlers(io) {
   registerNewMemberHandler(bot, io);
   registerChatCreatedHandler(bot, io);
   registerNewTitleHandler(bot, io);
+  registerCallbackHandler(bot, io);
 }
 
 async function botSendMessage(chat_id, message, options) {
@@ -32,4 +34,9 @@ async function exportLink(chat_id) {
   return await bot.exportChatInviteLink(chat_id);
 }
 
-module.exports = { bot, registerBotHandlers, botSendMessage, exportLink };
+module.exports = {
+  bot,
+  registerBotHandlers,
+  botSendMessage,
+  exportLink,
+};

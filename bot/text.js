@@ -27,6 +27,7 @@ module.exports = (bot, io) => {
           lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
           stage: '$conversation.stage',
           user: '$conversation.user',
+          grade: '$conversation.grade',
           tags: '$conversation.tags',
           tasks: '$conversation.tasks',
         },
@@ -167,6 +168,9 @@ module.exports = (bot, io) => {
           user: {
             $first: '$user',
           },
+          grade: {
+            $first: '$grade',
+          },
           tags: {
             $addToSet: '$tags',
           },
@@ -224,6 +228,7 @@ module.exports = (bot, io) => {
             color: '$stage.color',
           },
           user: 1,
+          grade: 1,
           tags: 1,
           tasks: 1,
         },

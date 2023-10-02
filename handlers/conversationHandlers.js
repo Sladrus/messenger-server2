@@ -58,6 +58,7 @@ module.exports = (io, socket) => {
           lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
           stage: '$conversation.stage',
           user: '$conversation.user',
+          grade: '$conversation.grade',
           tags: '$conversation.tags',
           tasks: '$conversation.tasks',
         },
@@ -198,6 +199,9 @@ module.exports = (io, socket) => {
           user: {
             $first: '$user',
           },
+          grade: {
+            $first: '$grade',
+          },
           tags: {
             $addToSet: '$tags',
           },
@@ -255,6 +259,7 @@ module.exports = (io, socket) => {
             color: '$stage.color',
           },
           user: 1,
+          grade: 1,
           tags: 1,
           tasks: 1,
         },
@@ -476,6 +481,8 @@ module.exports = (io, socket) => {
             lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
             stage: '$conversation.stage',
             user: '$conversation.user',
+            grade: '$conversation.grade',
+
             tags: '$conversation.tags',
           },
         },
@@ -558,6 +565,9 @@ module.exports = (io, socket) => {
             },
             user: {
               $first: '$user',
+            },
+            grade: {
+              $first: '$grade',
             },
             tags: {
               $addToSet: '$tags',
@@ -606,6 +616,7 @@ module.exports = (io, socket) => {
               color: '$stage.color',
             },
             user: 1,
+            grade: 1,
             tags: 1,
           },
         },
@@ -648,7 +659,6 @@ module.exports = (io, socket) => {
           select: '-conversation',
           populate: { path: 'type' },
         });
-      console.log(conversation?.tasks);
 
       return socket.emit('conversations:setOne', { conversation });
     } catch (e) {
@@ -657,7 +667,6 @@ module.exports = (io, socket) => {
   };
 
   const updateStage = async ({ id, stageId }) => {
-    console.log(id);
     try {
       await ConversationModel.updateOne(
         {
@@ -666,160 +675,7 @@ module.exports = (io, socket) => {
         { $set: { stage: new ObjectId(stageId), updatedAt: new Date() } }
       );
 
-      const pipeline = [
-        {
-          $group: {
-            _id: { chat_id: '$chat_id', createdAt: '$createdAt' },
-            updatedAt: { $max: '$updatedAt' },
-            conversation: { $first: '$$ROOT' },
-          },
-        },
-        {
-          $project: {
-            _id: '$conversation._id',
-            title: '$conversation.title',
-            chat_id: '$conversation.chat_id',
-            type: '$conversation.type',
-            unreadCount: '$conversation.unreadCount',
-            createdAt: '$conversation.createdAt',
-            updatedAt: '$conversation.updatedAt',
-            workAt: '$conversation.workAt',
-            lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
-            stage: '$conversation.stage',
-            user: '$conversation.user',
-            tags: '$conversation.tags',
-          },
-        },
-        {
-          $lookup: {
-            from: 'messages',
-            localField: 'lastMessageId',
-            foreignField: '_id',
-            as: 'lastMessage',
-          },
-        },
-        {
-          $lookup: {
-            from: 'stages',
-            localField: 'stage',
-            foreignField: '_id',
-            as: 'stage',
-          },
-        },
-        {
-          $unwind: '$stage',
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'user',
-            foreignField: '_id',
-            as: 'user',
-          },
-        },
-        {
-          $unwind: {
-            path: '$user',
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: 'tags',
-            localField: 'tags',
-            foreignField: '_id',
-            as: 'tags',
-          },
-        },
-        {
-          $unwind: {
-            path: '$tags',
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $group: {
-            _id: '$_id',
-            title: {
-              $first: '$title',
-            },
-            chat_id: {
-              $first: '$chat_id',
-            },
-            type: {
-              $first: '$type',
-            },
-            unreadCount: {
-              $first: '$unreadCount',
-            },
-            createdAt: {
-              $first: '$createdAt',
-            },
-            updatedAt: {
-              $first: '$updatedAt',
-            },
-            workAt: {
-              $first: '$workAt',
-            },
-            lastMessage: {
-              $first: '$lastMessage',
-            },
-            stage: {
-              $first: '$stage',
-            },
-            user: {
-              $first: '$user',
-            },
-            tags: {
-              $addToSet: '$tags',
-            },
-          },
-        },
-        {
-          $match: {
-            _id: new ObjectId(id),
-          },
-        },
-        {
-          $match: {
-            workAt: {
-              $gte: new Date(0),
-              $lte: new Date(
-                new Date().getFullYear(),
-                new Date().getMonth(),
-                new Date().getDate(),
-                23,
-                59,
-                59
-              ),
-            },
-          },
-        },
-        { $sort: { updatedAt: -1 } },
-        {
-          $project: {
-            _id: 1,
-            title: 1,
-            chat_id: 1,
-            type: 1,
-            unreadCount: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            workAt: 1,
-            lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
-            stage: {
-              _id: '$stage._id',
-              value: '$stage.value',
-              label: '$stage.label',
-              color: '$stage.color',
-            },
-            user: 1,
-            tags: 1,
-          },
-        },
-      ];
-      const conversations = await ConversationModel.aggregate(pipeline);
-      return io.emit('conversation:update', { conversation: conversations[0] });
+      return await findOneConversation(id);
     } catch (e) {
       console.log(e);
 
@@ -931,7 +787,6 @@ module.exports = (io, socket) => {
       );
 
       return await findOneConversation(id);
-
     } catch (e) {
       console.log(e);
 
@@ -949,7 +804,6 @@ module.exports = (io, socket) => {
       );
 
       await findOneConversation(id);
-
 
       const tags = await TagModel.find();
       return io.emit('tags:set', { tags });
@@ -1044,6 +898,7 @@ module.exports = (io, socket) => {
             lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
             stage: '$conversation.stage',
             user: '$conversation.user',
+            grade: '$conversation.grade',
             tags: '$conversation.tags',
             tasks: '$conversation.tasks',
           },
@@ -1184,6 +1039,9 @@ module.exports = (io, socket) => {
             user: {
               $first: '$user',
             },
+            grade: {
+              $first: '$grade',
+            },
             tags: {
               $addToSet: '$tags',
             },
@@ -1241,6 +1099,7 @@ module.exports = (io, socket) => {
               color: '$stage.color',
             },
             user: 1,
+            grade: 1,
             tags: 1,
             tasks: 1,
           },
@@ -1269,7 +1128,6 @@ module.exports = (io, socket) => {
 
   const sendMessage = async ({ id, text, type, user }) => {
     try {
-      // return;
       const conversation = await ConversationModel.findOne({
         _id: id,
       });
@@ -1303,7 +1161,6 @@ module.exports = (io, socket) => {
       }
 
       const message = await MessageModel.create(dtoMessage);
-      console.log(message);
 
       await ConversationModel.updateOne(
         { _id: id },
@@ -1322,7 +1179,6 @@ module.exports = (io, socket) => {
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
-
       socket.emit('error', { message: e.message });
     }
   };
@@ -1488,6 +1344,54 @@ module.exports = (io, socket) => {
     }
   };
 
+  const sendGrade = async ({ id, user }) => {
+    try {
+      const conversation = await ConversationModel.findOne({
+        _id: id,
+      });
+
+      const msg = await botSendMessage(
+        conversation?.chat_id,
+        'Спасибо за Ваше обращение!\n\nВ целях повышения качества обслуживания клиентов, просим Вас оценить консультацию менеджера. И три кнопки на выбор:',
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'Хорошо', callback_data: 'grade_high' }],
+              [{ text: 'Нормально', callback_data: 'grade_middle' }],
+              [{ text: 'Плохо', callback_data: 'grade_low' }],
+            ],
+          },
+        }
+      );
+      msg.type = 'text';
+      msg.from.id = user._id;
+      msg.from.first_name = user.username;
+      msg.unread = false;
+
+      const message = await MessageModel.create(msg);
+
+      await ConversationModel.updateOne(
+        { _id: id },
+        {
+          $push: { messages: message._id },
+          $set: { updatedAt: new Date(), unreadCount: 0 },
+        }
+      );
+      const messages = conversation.messages;
+      const messageIds = messages.map((message) => message._id);
+      await MessageModel.updateMany(
+        { _id: { $in: messageIds } },
+        { unread: false }
+      );
+
+      return await findOneConversation(id);
+    } catch (e) {
+      console.log(e);
+
+      socket.emit('error', { message: e.message });
+    }
+  };
+
   socket.on('conversations:get', getConversations);
   socket.on('conversations:getSearch', getSearchedConversations);
   socket.on('conversations:getOne', getOneConversation);
@@ -1509,6 +1413,7 @@ module.exports = (io, socket) => {
   socket.on('conversation:createMoneysend', createMoneysend);
   socket.on('conversation:read', read);
   socket.on('conversation:sendChat', sendChat);
+  socket.on('conversation:sendGrade', sendGrade);
 
   socket.on('message:sendMessage', sendMessage);
 };
