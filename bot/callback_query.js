@@ -3,6 +3,7 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const { ConversationModel } = require('../models/conversationModel');
 const { MessageModel } = require('../models/messageModel');
+const { TagModel } = require('../models/tagModel');
 
 module.exports = (bot, io) => {
   const findOneConversation = async (id) => {
@@ -283,6 +284,19 @@ module.exports = (bot, io) => {
     query.message.from = query.from;
     const msg = query.message;
     const grade = query.data.split('_')[1];
+    const tag = await TagModel.findOne({ value: gradeType(grade) });
+    const conversation = await ConversationModel.findOne({
+      chat_id: chatId,
+    });
+    if (!conversation.tags.includes(tag._id)) {
+      await ConversationModel.updateOne(
+        { chat_id: chatId },
+        {
+          $set: { updatedAt: new Date() },
+          $push: { tags: tag._id },
+        }
+      );
+    }
     await createMessage(msg, grade);
     await bot.deleteMessage(chatId, msg.message_id);
     await bot.sendMessage(chatId, 'Спасибо за Ваше обращение! ');
