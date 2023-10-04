@@ -336,6 +336,10 @@ module.exports = (bot, io) => {
         conversation = newConversation;
       } else {
         if (!conversation?.workAt) {
+          await stageHistoryService.create({
+            stageId: stage._id,
+            convId: conversation._id,
+          });
           await ConversationModel.updateOne(
             {
               _id: new ObjectId(conversation?._id),
@@ -372,10 +376,6 @@ module.exports = (bot, io) => {
           );
         }
       }
-      await stageHistoryService.create({
-        stageId: stage._id,
-        convId: conversation._id,
-      });
 
       if (!conversation?.link) {
         try {
