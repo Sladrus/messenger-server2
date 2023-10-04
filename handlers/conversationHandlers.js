@@ -8,6 +8,7 @@ const { default: axios } = require('axios');
 const { StageModel } = require('../models/stageModel');
 const { telegramSendMessage } = require('../telegram');
 const { TaskModel } = require('../models/taskModel');
+const stageHistoryService = require('../service/stageHistoryService');
 const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
@@ -674,7 +675,10 @@ module.exports = (io, socket) => {
         },
         { $set: { stage: new ObjectId(stageId), updatedAt: new Date() } }
       );
-
+      await stageHistoryService.create({
+        stageId: new ObjectId(stageId),
+        convId: new ObjectId(id),
+      });
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
@@ -1261,6 +1265,10 @@ module.exports = (io, socket) => {
       );
 
       const stage = await StageModel.findOne({ value: 'task' });
+      await stageHistoryService.create({
+        stageId: stage._id,
+        convId: new ObjectId(id),
+      });
       await ConversationModel.updateOne(
         {
           _id: new ObjectId(id),

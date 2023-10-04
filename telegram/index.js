@@ -10,6 +10,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { botSendMessage } = require('../bot');
+const stageHistoryService = require('../service/stageHistoryService');
 
 require('dotenv').config();
 
@@ -196,6 +197,7 @@ const createMessage = async (event, io) => {
     });
     console.log(conversation);
     const stage = await StageModel.findOne({ value: 'raw' });
+
     //-1001955007812
     if (!conversation) {
       await botSendMessage(
@@ -225,6 +227,10 @@ const createMessage = async (event, io) => {
       });
       conversation = newConversation;
     }
+    await stageHistoryService.create({
+      stageId: stage._id,
+      convId: conversation._id,
+    });
     let msg;
     if (message.media && message.media.photo) {
       const media = message.media;

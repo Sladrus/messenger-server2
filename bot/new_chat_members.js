@@ -6,6 +6,7 @@ const { ConversationModel } = require('../models/conversationModel');
 const { MessageModel } = require('../models/messageModel');
 const { StageModel } = require('../models/stageModel');
 const { default: axios } = require('axios');
+const stageHistoryService = require('../service/stageHistoryService');
 
 const token = process.env.API_TOKEN;
 const officeToken = process.env.OFFICE_TOKEN;
@@ -371,6 +372,11 @@ module.exports = (bot, io) => {
           );
         }
       }
+      await stageHistoryService.create({
+        stageId: stage._id,
+        convId: conversation._id,
+      });
+
       if (!conversation?.link) {
         try {
           const link = await bot.exportChatInviteLink(conversation.chat_id);
