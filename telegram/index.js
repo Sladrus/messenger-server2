@@ -226,11 +226,12 @@ const createMessage = async (event, io) => {
         updatedAt: Date.now(),
       });
       conversation = newConversation;
+      await stageHistoryService.create({
+        stageId: stage._id,
+        convId: conversation._id,
+      });
     }
-    await stageHistoryService.create({
-      stageId: stage._id,
-      convId: conversation._id,
-    });
+
     let msg;
     if (message.media && message.media.photo) {
       const media = message.media;
