@@ -32,7 +32,10 @@ async function getOrder(chat_id) {
 
 async function checkUser(username) {
   try {
-    const response = await screenApi.post(`/screening`, { tgName: username });
+    const response = await screenApi.post(`/contact`, {
+      value: username,
+      type: 'TGNAME',
+    });
     return response.data;
   } catch (error) {
     return;
