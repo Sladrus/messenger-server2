@@ -31,7 +31,6 @@ app.get('/photo/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, 'telegram', 'photos', filename);
 
-  // Check if the file exists before sending
   if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {
@@ -55,12 +54,19 @@ registerBotHandlers(io);
 registerTelegramHandlers.initClient(io);
 
 const onConnection = (socket) => {
-  console.log('HRE');
   registerHandlers(io, socket);
 
   console.log(`User: ${socket.id} joined `);
   socket.on('disconnect', () => {
     console.log(`User: ${socket.id} disconnected`);
+  });
+
+  socket.on('connect_error', (error) => {
+    console.log(error);
+  });
+
+  socket.on('error', (error) => {
+    console.log(error);
   });
 };
 
