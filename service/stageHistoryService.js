@@ -363,7 +363,7 @@ class StageHistoryService {
 
     const rows = Object.values(groupedRows).flatMap((row) => {
       const chatRows = row.chats.map((chat, index) => ({
-        path: [...row.path, chat.title], // Include the chat title in the path
+        path: [...row.path, chat.title + '-' + chat.chat_id], // Include the chat title in the path
         id: `${row.id}-${chat._id}`, // Set the ID based on the tag and chat ID
         chatCount: '',
         percent: '',
