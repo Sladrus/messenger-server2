@@ -226,7 +226,7 @@ class StageHistoryService {
       const userRow = {
         path: [user],
         id: user,
-        date: `${formatDateString(startDate)}-${formatDateString(endDate)}`,
+        date: `${startDate}-${endDate}`,
         chatCount: `${Object.keys(groupedConversations[user]).length} (${(
           (Object.keys(groupedConversations[user]).length /
             conversations.length) *
