@@ -227,13 +227,11 @@ class StageHistoryService {
         path: [user],
         id: user,
         date: `${formatDateString(startDate)}-${formatDateString(endDate)}`,
-        chatCount: `${Object.keys(groupedConversations[user]).length} (${
-          (
-            (Object.keys(groupedConversations[user]).length /
-              conversations.length) *
-            100
-          ).toFixed(2) || 0
-        }%)`,
+        chatCount: `${Object.keys(groupedConversations[user]).length} (${(
+          (Object.keys(groupedConversations[user]).length /
+            conversations.length) *
+            100 || 0
+        ).toFixed(2)}%)`,
       };
       let stageCounts = {}; // Define stageCounts here
 
