@@ -324,6 +324,7 @@ class StageHistoryService {
 
   async getByWeRefused(body) {
     console.log(body);
+    const stage = body?.stage;
     const startDate = body.dateRange[0]
       ? new Date(body.dateRange[0])
       : new Date(0);
@@ -331,8 +332,7 @@ class StageHistoryService {
 
     const tags = body?.tags || [];
     const tagIds = tags.map((tag) => tag._id);
-
-    const conversations = await ConversationModel.find({
+    const query = {
       tags: { $in: tagIds },
       workAt: {
         $ne: null,
@@ -340,7 +340,12 @@ class StageHistoryService {
         $lte: endDate,
       },
       type: { $ne: 'private' },
-    }).populate('tags');
+    };
+
+    if (stage && Object.keys(stage).length > 0) {
+      query.stage = stage;
+    }
+    const conversations = await ConversationModel.find(query).populate('tags');
 
     const groupedRows = {};
 
