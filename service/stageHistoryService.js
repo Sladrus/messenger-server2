@@ -339,6 +339,7 @@ class StageHistoryService {
         $gte: startDate,
         $lte: endDate,
       },
+      type: { $ne: 'private' },
     }).populate('tags');
 
     const groupedRows = {};
