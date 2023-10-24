@@ -3,6 +3,7 @@ const { StageHistoryModel } = require('../models/stageHistoryModel');
 require('dotenv').config();
 const _ = require('lodash');
 const { StageModel } = require('../models/stageModel');
+const { TagModel } = require('../models/tagModel');
 
 class StageHistoryService {
   async create({ stageId, convId }) {
@@ -180,10 +181,12 @@ class StageHistoryService {
   }
 
   async getByUsers(body) {
-    const startDate = body.dateRange.startDate
-      ? new Date(body.dateRange.startDate)
+    console.log(body);
+
+    const startDate = body.dateRange[0]
+      ? new Date(body.dateRange[0])
       : new Date(0);
-    const endDate = new Date(body.dateRange.endDate);
+    const endDate = new Date(body.dateRange[1]);
     console.log(body);
     function formatDateString(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -223,8 +226,14 @@ class StageHistoryService {
       const userRow = {
         path: [user],
         id: user,
-        // date: formatDateString(new Date()),
-        chatCount: Object.keys(groupedConversations[user]).length,
+        date: `${formatDateString(startDate)}-${formatDateString(endDate)}`,
+        chatCount: `${Object.keys(groupedConversations[user]).length} (${
+          (
+            (Object.keys(groupedConversations[user]).length /
+              conversations.length) *
+            100
+          ).toFixed(2) || 0
+        }%)`,
       };
       let stageCounts = {}; // Define stageCounts here
 
@@ -271,7 +280,6 @@ class StageHistoryService {
         align: 'center',
         minWidth: 140,
         flex: 1,
-        // valueGetter: (params) => `${params.getValue(stageValue)?.percent}%`, // Display the percentage in the cell
       };
     });
 
@@ -289,7 +297,7 @@ class StageHistoryService {
       ).length;
       const percent = (stageCount / totalRow.chatCount) * 100 || 0;
       const countPercentString = `${stageCount} (${percent.toFixed(2)}%)`;
-      totalRow[stage.value] = countPercentString;
+      if (stageCount !== 0) totalRow[stage.value] = countPercentString;
     }
 
     rows.push(totalRow);
@@ -308,10 +316,91 @@ class StageHistoryService {
         headerName: 'Всего',
         headerAlign: 'center',
         align: 'center',
-        minWidth: 100,
+        minWidth: 120,
       },
     ];
     return { rows: [...rows], columns };
+  }
+
+  async getByWeRefused(body) {
+    console.log(body);
+    const startDate = body.dateRange[0]
+      ? new Date(body.dateRange[0])
+      : new Date(0);
+    const endDate = new Date(body.dateRange[1]);
+
+    const tags = body?.tags || [];
+    const tagIds = tags.map((tag) => tag._id);
+
+    const conversations = await ConversationModel.find({
+      tags: { $in: tagIds },
+      workAt: {
+        $ne: null,
+        $gte: startDate,
+        $lte: endDate,
+      },
+    }).populate('tags');
+
+    const groupedRows = {};
+
+    tags.forEach((tag) => {
+      groupedRows[tag._id] = {
+        id: tag._id,
+        path: [tag.value],
+        chatCount: 0,
+        chats: [], // Add a new property to store the chats for each tag
+      };
+    });
+
+    conversations.forEach((conversation) => {
+      conversation.tags.forEach((tag) => {
+        if (groupedRows[tag._id]) {
+          groupedRows[tag._id].chatCount++;
+          groupedRows[tag._id].chats.push(conversation); // Store the chat in the corresponding tag's chats array
+        }
+      });
+    });
+
+    const rows = Object.values(groupedRows).flatMap((row) => {
+      const chatRows = row.chats.map((chat, index) => ({
+        path: [...row.path, chat.title], // Include the chat title in the path
+        id: `${row.id}-${chat._id}`, // Set the ID based on the tag and chat ID
+        chatCount: '',
+        percent: '',
+        ...chat.toObject(),
+      }));
+
+      return [
+        {
+          ...row,
+          chatCount: row.chatCount,
+          percent:
+            ((row.chatCount / conversations.length) * 100).toFixed(2) + '%',
+        },
+        ...chatRows,
+      ];
+    });
+
+    const columns = [
+      {
+        field: 'chatCount',
+        headerName: 'Количество чатов',
+        headerAlign: 'center',
+        align: 'center',
+        flex: 1,
+      },
+      {
+        field: 'percent',
+        headerName: 'Процент',
+        headerAlign: 'center',
+        align: 'center',
+        flex: 1,
+      },
+    ];
+
+    console.log(rows);
+
+    return { rows, columns };
   }
 }
 

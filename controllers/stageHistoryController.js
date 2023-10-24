@@ -3,6 +3,7 @@ const {
   getByWeeksStatic,
   getByWeeksDynamic,
   getByUsers,
+  getByWeRefused,
 } = require('../service/stageHistoryService');
 
 class StageHistoryController {
@@ -31,8 +32,18 @@ class StageHistoryController {
   async getByUsers(req, res, next) {
     try {
       const body = req.body;
-      console.log(body);
       const result = await getByUsers(body);
+      return res.json(result);
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+
+  async getByWeRefused(req, res, next) {
+    try {
+      const body = req.body;
+      const result = await getByWeRefused(body);
       return res.json(result);
     } catch (e) {
       console.log(e);
