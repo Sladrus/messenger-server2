@@ -190,13 +190,15 @@ class StageHistoryService {
     }
 
     const conversations = await ConversationModel.find({
-      workAt: { $exists: true },
-      stage: { $exists: true },
+      workAt: { $ne: null },
+      stage: { $ne: null },
+      type: { $ne: 'private' },
     })
       .populate({
         path: 'user',
       })
       .populate({ path: 'stage' });
+    console.log(conversations);
     const groupedConversations = conversations.reduce(
       (result, conversation) => {
         const user = conversation.user?.username || 'Нет менеджера';
@@ -251,7 +253,7 @@ class StageHistoryService {
       }
       return [userRow, ...chatRows];
     });
-    const stages = await StageModel.find();
+    const stages = await StageModel.find({ type: { $ne: 'private' } });
     const statusColumns = stages.map((stage) => {
       const stageLabel = stage.label;
       const stageValue = stage.value;
