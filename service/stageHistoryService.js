@@ -267,7 +267,7 @@ class StageHistoryService {
       }
       return [userRow, ...chatRows];
     });
-    const stages = await StageModel.find({ type: { $ne: 'private' } });
+    const stages = await StageModel.find({ type: { $ne: 'private' } }).sort({ position: 1 });;
     const statusColumns = stages.map((stage) => {
       const stageLabel = stage.label;
       const stageValue = stage.value;
