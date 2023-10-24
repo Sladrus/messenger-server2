@@ -31,6 +31,7 @@ class StageHistoryController {
   async getByUsers(req, res, next) {
     try {
       const body = req.body;
+      console.log(body);
       const result = await getByUsers(body);
       return res.json(result);
     } catch (e) {

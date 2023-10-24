@@ -180,6 +180,10 @@ class StageHistoryService {
   }
 
   async getByUsers(body) {
+    const startDate = body.dateRange.startDate
+      ? new Date(body.dateRange.startDate)
+      : new Date(0);
+    const endDate = new Date(body.dateRange.endDate);
     console.log(body);
     function formatDateString(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -190,7 +194,11 @@ class StageHistoryService {
     }
 
     const conversations = await ConversationModel.find({
-      workAt: { $ne: null },
+      workAt: {
+        $ne: null,
+        $gte: startDate,
+        $lte: endDate,
+      },
       stage: { $ne: null },
       type: { $ne: 'private' },
     })
@@ -198,7 +206,6 @@ class StageHistoryService {
         path: 'user',
       })
       .populate({ path: 'stage' });
-    console.log(conversations);
     const groupedConversations = conversations.reduce(
       (result, conversation) => {
         const user = conversation.user?.username || 'Нет менеджера';
@@ -285,8 +292,6 @@ class StageHistoryService {
       totalRow[stage.value] = countPercentString;
     }
 
-    console.log(rows);
-    console.log(totalRow);
     rows.push(totalRow);
 
     const columns = [

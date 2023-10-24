@@ -13,17 +13,19 @@ const registerTelegramHandlers = require('./telegram');
 const fs = require('fs');
 const path = require('path');
 const router = require('./router');
+const bodyParser = require('body-parser');
 
 const app = express();
 app.use(
   cors({
     origin: '*',
     methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
-    allowedHeaders: ['Access-Control-Allow-Origin'],
+    allowedHeaders: ['Access-Control-Allow-Origin', 'Content-Type'],
     credentials: true,
   })
 );
 
+app.use(bodyParser.json());
 app.use(express.static('photos'));
 app.use('/api', router);
 
