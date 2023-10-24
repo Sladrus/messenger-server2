@@ -230,7 +230,7 @@ class StageHistoryService {
         chatCount: `${Object.keys(groupedConversations[user]).length} (${(
           (Object.keys(groupedConversations[user]).length /
             conversations.length) *
-            100 || 0
+          100 || 0
         ).toFixed(2)}%)`,
       };
       let stageCounts = {}; // Define stageCounts here
@@ -260,7 +260,7 @@ class StageHistoryService {
       Object.assign(userRow, stageCounts);
       for (const stageValue in stageCounts) {
         const stageCount = stageCounts[stageValue].count;
-        const totalChatCount = userRow.chatCount;
+        const totalChatCount = Number(userRow.chatCount.split(' ')[0]);
         const percent = (stageCount / totalChatCount) * 100 || 0;
         const countPercentString = `${stageCount} (${percent.toFixed(2)}%)`;
         userRow[stageValue] = countPercentString;
