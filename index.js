@@ -70,6 +70,7 @@ const onConnection = (socket) => {
   });
 };
 
+// io.listen(httpServer);
 io.on('connection', onConnection);
 
 mongoose

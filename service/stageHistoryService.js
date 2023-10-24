@@ -1,6 +1,8 @@
 const { ConversationModel } = require('../models/conversationModel');
 const { StageHistoryModel } = require('../models/stageHistoryModel');
 require('dotenv').config();
+const _ = require('lodash');
+const { StageModel } = require('../models/stageModel');
 
 class StageHistoryService {
   async create({ stageId, convId }) {
@@ -64,52 +66,6 @@ class StageHistoryService {
   }
 
   async getByWeeksDynamic() {
-    // const result = await ConversationModel.aggregate([
-    //   {
-    //     $match: {
-    //       workAt: { $ne: null }, // Exclude documents without a workAt value
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: 'stages',
-    //       localField: 'stage',
-    //       foreignField: '_id',
-    //       as: 'stage',
-    //     },
-    //   },
-    //   {
-    //     $project: {
-    //       workAt: {
-    //         $dateFromParts: {
-    //           isoWeekYear: { $isoWeekYear: '$workAt' },
-    //           isoWeek: { $isoWeek: '$workAt' },
-    //         },
-    //       },
-    //       stage: 1,
-    //       conversation: 1,
-    //     },
-    //   },
-    //   {
-    //     $group: {
-    //       _id: { week: { $week: '$workAt' }, createdAt: '$workAt' },
-    //       startDate: { $min: '$workAt' },
-    //       endDate: { $max: '$workAt' },
-    //       records: { $push: '$$ROOT' },
-    //     },
-    //   },
-    // ]);
-    // result.forEach((week) => {
-    //   if (week.startDate && week.endDate) {
-    //     week.startDate.setDate(
-    //       week.startDate.getDate() - ((week.startDate.getDay() + 6) % 7)
-    //     );
-    //     week.endDate.setDate(
-    //       week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
-    //     );
-    //   }
-    // });
-    // console.log(result);
     function getWeekNumber(date) {
       if (!date) return;
 
@@ -201,9 +157,13 @@ class StageHistoryService {
           const chatRows = Object.keys(groupedConversations[week][user]).map(
             (chat, index) => {
               const conversation = groupedConversations[week][user][chat];
+              const fieldName = conversation.stage;
+
               return {
                 path: [week, user, chat],
                 date: conversation.updatedAt,
+                [fieldName]: conversation.stage,
+                //как тут сделать чтобы названеи поля было значением conversation.stage.value
                 id: conversation._id,
               };
             }
@@ -217,6 +177,134 @@ class StageHistoryService {
     });
     console.log(rows);
     return rows;
+  }
+
+  async getByUsers(body) {
+    console.log(body);
+    function formatDateString(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = String(date.getFullYear()).slice(-2);
+
+      return `${day}.${month}.${year}`;
+    }
+
+    const conversations = await ConversationModel.find({
+      workAt: { $exists: true },
+      stage: { $exists: true },
+    })
+      .populate({
+        path: 'user',
+      })
+      .populate({ path: 'stage' });
+    const groupedConversations = conversations.reduce(
+      (result, conversation) => {
+        const user = conversation.user?.username || 'Нет менеджера';
+        const chat = conversation.title;
+
+        result[user] = result[user] || {};
+        result[user][chat] = conversation;
+
+        return result;
+      },
+      {}
+    );
+
+    const rows = Object.keys(groupedConversations).flatMap((user) => {
+      const userRow = {
+        path: [user],
+        id: user,
+        // date: formatDateString(new Date()),
+        chatCount: Object.keys(groupedConversations[user]).length,
+      };
+      let stageCounts = {}; // Define stageCounts here
+
+      const chatRows = Object.keys(groupedConversations[user]).map(
+        (chat, index) => {
+          const conversation = groupedConversations[user][chat];
+          const fieldName = conversation.stage?.value; // Use conversation.stage.value as the field name
+
+          if (fieldName) {
+            stageCounts[fieldName] = stageCounts[fieldName] || {
+              count: 0,
+              percent: 0,
+            };
+            stageCounts[fieldName].count++;
+          }
+
+          return {
+            path: [user, chat],
+            date: formatDateString(new Date(conversation?.workAt)),
+            [fieldName]: '✔',
+            id: conversation._id,
+          };
+        }
+      );
+
+      Object.assign(userRow, stageCounts);
+      for (const stageValue in stageCounts) {
+        const stageCount = stageCounts[stageValue].count;
+        const totalChatCount = userRow.chatCount;
+        const percent = (stageCount / totalChatCount) * 100 || 0;
+        const countPercentString = `${stageCount} (${percent.toFixed(2)}%)`;
+        userRow[stageValue] = countPercentString;
+      }
+      return [userRow, ...chatRows];
+    });
+    const stages = await StageModel.find();
+    const statusColumns = stages.map((stage) => {
+      const stageLabel = stage.label;
+      const stageValue = stage.value;
+      return {
+        field: stageValue,
+        headerName: stageLabel,
+        headerAlign: 'center',
+        align: 'center',
+        minWidth: 140,
+        flex: 1,
+        // valueGetter: (params) => `${params.getValue(stageValue)?.percent}%`, // Display the percentage in the cell
+      };
+    });
+
+    // Calculate the totals for each status
+    const totalRow = {
+      path: ['Всего'],
+      id: 'total',
+      date: '',
+      chatCount: conversations.length,
+    };
+
+    for (const stage of stages) {
+      const stageCount = conversations.filter(
+        (conversation) => conversation.stage?.value === stage.value
+      ).length;
+      const percent = (stageCount / totalRow.chatCount) * 100 || 0;
+      const countPercentString = `${stageCount} (${percent.toFixed(2)}%)`;
+      totalRow[stage.value] = countPercentString;
+    }
+
+    console.log(rows);
+    console.log(totalRow);
+    rows.push(totalRow);
+
+    const columns = [
+      {
+        field: 'date',
+        headerName: 'Дата',
+        headerAlign: 'center',
+        align: 'center',
+        minWidth: 140,
+      },
+      ...statusColumns,
+      {
+        field: 'chatCount',
+        headerName: 'Всего',
+        headerAlign: 'center',
+        align: 'center',
+        minWidth: 100,
+      },
+    ];
+    return { rows: [...rows], columns };
   }
 }
 
