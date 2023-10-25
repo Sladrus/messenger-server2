@@ -311,14 +311,7 @@ module.exports = (bot, io) => {
         return;
       }
       const order = await getOrder(Number(msg.chat.id));
-      const chatInfo = await getChatInfo(Number(msg.chat.id));
-      if (chatInfo?.issued_by) {
-        const tag = await addTag({
-          id: conversation?._id,
-          value: chatInfo?.issued_by,
-        });
-        console.log(tag);
-      }
+
       const fullName = msg.new_chat_member?.last_name
         ? msg.new_chat_member.first_name + ' ' + msg.new_chat_member?.last_name
         : msg.new_chat_member.first_name;
@@ -374,6 +367,14 @@ module.exports = (bot, io) => {
             stageId: stage._id,
             convId: conversation._id,
           });
+          const chatInfo = await getChatInfo(Number(-1001719290313));
+          if (chatInfo?.issued_by) {
+            const tag = await addTag({
+              id: conversation?._id,
+              value: chatInfo?.issued_by,
+            });
+            console.log(tag);
+          }
           await ConversationModel.updateOne(
             {
               _id: new ObjectId(conversation?._id),
