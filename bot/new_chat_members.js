@@ -367,7 +367,7 @@ module.exports = (bot, io) => {
             stageId: stage._id,
             convId: conversation._id,
           });
-          const chatInfo = await getChatInfo(Number(-1001719290313));
+          const chatInfo = await getChatInfo(Number(conversation.chat_id));
           if (chatInfo?.issued_by) {
             const tag = await addTag({
               id: conversation?._id,
