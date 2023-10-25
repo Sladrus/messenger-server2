@@ -7,12 +7,20 @@ const { MessageModel } = require('../models/messageModel');
 const { StageModel } = require('../models/stageModel');
 const { default: axios } = require('axios');
 const stageHistoryService = require('../service/stageHistoryService');
+const { TagModel } = require('../models/tagModel');
 
 const token = process.env.API_TOKEN;
+const mpToken = process.env.MP_API_TOKEN;
+
 const officeToken = process.env.OFFICE_TOKEN;
 const officeApi = axios.create({
   baseURL: 'http://app.moneyport.ru/office',
   headers: { 'x-api-key': `${token}` },
+});
+
+const mpApi = axios.create({
+  baseURL: 'http://api.moneyport.world/',
+  headers: { 'X-Api-Key': `${mpToken}` },
 });
 
 const screenApi = axios.create({
@@ -24,6 +32,15 @@ async function getOrder(chat_id) {
     const response = await officeApi.get(
       `/order?chat_id=${chat_id}&api_key=${officeToken}`
     );
+    return response.data;
+  } catch (error) {
+    return;
+  }
+}
+
+async function getChatInfo(chat_id) {
+  try {
+    const response = await mpApi.get(`/getChat?chat_id=${chat_id}`);
     return response.data;
   } catch (error) {
     return;
@@ -276,9 +293,16 @@ module.exports = (bot, io) => {
     return io.emit('conversation:update', { conversation: conversations[0] });
   };
 
-  const createMessage = async (msg) => {
-    console.log(msg);
+  const addTag = async ({ id, value }) => {
+    const tag = await TagModel.findOne({ value: value });
+    await ConversationModel.updateOne(
+      { _id: id },
+      { $push: { tags: tag._id }, $set: { updatedAt: new Date() } }
+    );
+    return tag;
+  };
 
+  const createMessage = async (msg) => {
     try {
       const conversation = await ConversationModel.findOne({
         chat_id: Number(msg.chat.id),
@@ -287,7 +311,14 @@ module.exports = (bot, io) => {
         return;
       }
       const order = await getOrder(Number(msg.chat.id));
-
+      const chatInfo = await getChatInfo(Number(msg.chat.id));
+      if (chatInfo?.issued_by) {
+        const tag = await addTag({
+          id: conversation?._id,
+          value: chatInfo?.issued_by,
+        });
+        console.log(tag);
+      }
       const fullName = msg.new_chat_member?.last_name
         ? msg.new_chat_member.first_name + ' ' + msg.new_chat_member?.last_name
         : msg.new_chat_member.first_name;
