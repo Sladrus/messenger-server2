@@ -453,7 +453,6 @@ class StageHistoryService {
         tagChatCount += chatCount;
 
         const chatRows = userRow.chats.map((chat) => {
-          console.log(chat);
           rows.push({
             path: [...userRow.path, `${chat.title} (${chat.chat_id})`],
             id: `${userRow.id}-${chat._id}`,
@@ -471,22 +470,30 @@ class StageHistoryService {
         };
       });
 
+      Object.values(tagRow.children).forEach((userRow) => {
+        const chatCount = userRow.chats.length;
+        const percent =
+          chatCount > 0
+            ? ((chatCount / tagRow.chatCount) * 100).toFixed(0)
+            : '';
+        userRow.percent = percent + '%';
+        const matchingUserRow = userRows.find((row) => row.id === userRow.id);
+        if (matchingUserRow) {
+          matchingUserRow.percent = userRow.percent;
+        }
+      });
+      console.log(tagChatCount, conversations.length);
       const tagRowWithTotal = {
         ...tagRow,
         chatCount: tagChatCount,
         chats: userRows.flatMap((userRow) => userRow.chats),
-        percent: '',
+        percent:
+          tagChatCount > 0
+            ? ((tagChatCount / conversations.length) * 100).toFixed(0) + '%'
+            : '',
       };
-
+      console.log(userRows);
       rows.push(tagRowWithTotal, ...userRows);
-    });
-
-    rows.forEach((row) => {
-      const percent =
-        row?.chatCount > 0
-          ? ((row.chatCount / conversations.length) * 100).toFixed(0)
-          : '';
-      if (row?.chatCount) row.percent = percent + '%';
     });
 
     return { rows, columns };
