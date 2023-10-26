@@ -5,6 +5,14 @@ const _ = require('lodash');
 const { StageModel } = require('../models/stageModel');
 const { TagModel } = require('../models/tagModel');
 
+function formatDateString(date) {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+
+  return `${day}.${month}.${year}`;
+}
+
 class StageHistoryService {
   async create({ stageId, convId }) {
     const record = StageHistoryModel.create({
@@ -187,28 +195,29 @@ class StageHistoryService {
       ? new Date(body.dateRange[0])
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
-    console.log(body);
-    function formatDateString(date) {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = String(date.getFullYear()).slice(-2);
 
-      return `${day}.${month}.${year}`;
-    }
+    const type = body?.type;
 
-    const conversations = await ConversationModel.find({
+    const query = {
       workAt: {
         $ne: null,
         $gte: startDate,
         $lte: endDate,
       },
       stage: { $ne: null },
-      type: { $ne: 'private' },
-    })
+    };
+
+    if (type?.value) {
+      if (type?.value === 'group') query.type = 'supergroup';
+      if (type?.value === 'private') query.type = 'private';
+    }
+
+    const conversations = await ConversationModel.find(query)
       .populate({
         path: 'user',
       })
       .populate({ path: 'stage' });
+
     const groupedConversations = conversations.reduce(
       (result, conversation) => {
         const user = conversation.user?.username || 'Нет менеджера';
@@ -226,48 +235,50 @@ class StageHistoryService {
       const userRow = {
         path: [user],
         id: user,
-        date: `${startDate}-${endDate}`,
+        date: `${formatDateString(startDate)}-${formatDateString(endDate)}`,
         chatCount: `${Object.keys(groupedConversations[user]).length} (${(
           (Object.keys(groupedConversations[user]).length /
             conversations.length) *
-          100 || 0
-        ).toFixed(2)}%)`,
+            100 || 0
+        ).toFixed(0)}%)`,
       };
-      let stageCounts = {}; // Define stageCounts here
+      let stageCounts = {};
 
-      const chatRows = Object.keys(groupedConversations[user]).map(
-        (chat, index) => {
-          const conversation = groupedConversations[user][chat];
-          const fieldName = conversation.stage?.value; // Use conversation.stage.value as the field name
+      const chatRows = Object.keys(groupedConversations[user]).map((chat) => {
+        const conversation = groupedConversations[user][chat];
+        const fieldName = conversation.stage?.value;
 
-          if (fieldName) {
-            stageCounts[fieldName] = stageCounts[fieldName] || {
-              count: 0,
-              percent: 0,
-            };
-            stageCounts[fieldName].count++;
-          }
-
-          return {
-            path: [user, chat],
-            date: formatDateString(new Date(conversation?.workAt)),
-            [fieldName]: '✔',
-            id: conversation._id,
+        if (fieldName) {
+          stageCounts[fieldName] = stageCounts[fieldName] || {
+            count: 0,
+            percent: 0,
           };
+          stageCounts[fieldName].count++;
         }
-      );
+
+        return {
+          path: [user, `${chat} (${conversation.chat_id})`],
+          date: formatDateString(new Date(conversation?.workAt)),
+          [fieldName]: '✔',
+          id: conversation._id,
+        };
+      });
 
       Object.assign(userRow, stageCounts);
       for (const stageValue in stageCounts) {
         const stageCount = stageCounts[stageValue].count;
         const totalChatCount = Number(userRow.chatCount.split(' ')[0]);
         const percent = (stageCount / totalChatCount) * 100 || 0;
-        const countPercentString = `${stageCount} (${percent.toFixed(2)}%)`;
+        const countPercentString = `${stageCount} (${percent.toFixed(0)}%)`;
         userRow[stageValue] = countPercentString;
       }
       return [userRow, ...chatRows];
     });
-    const stages = await StageModel.find({ type: { $ne: 'private' } }).sort({ position: 1 });;
+    const stages = await StageModel.find({
+      type: { $in: [type.value, 'all'] },
+    }).sort({
+      position: 1,
+    });
     const statusColumns = stages.map((stage) => {
       const stageLabel = stage.label;
       const stageValue = stage.value;
@@ -281,7 +292,6 @@ class StageHistoryService {
       };
     });
 
-    // Calculate the totals for each status
     const totalRow = {
       path: ['Всего'],
       id: 'total',
@@ -294,7 +304,7 @@ class StageHistoryService {
         (conversation) => conversation.stage?.value === stage.value
       ).length;
       const percent = (stageCount / totalRow.chatCount) * 100 || 0;
-      const countPercentString = `${stageCount} (${percent.toFixed(2)}%)`;
+      const countPercentString = `${stageCount} (${percent.toFixed(0)}%)`;
       if (stageCount !== 0) totalRow[stage.value] = countPercentString;
     }
 
@@ -320,30 +330,56 @@ class StageHistoryService {
     return { rows: [...rows], columns };
   }
 
-  async getByWeRefused(body) {
+  async getByTags(body) {
     console.log(body);
-    const stage = body?.stage;
+
     const startDate = body.dateRange[0]
       ? new Date(body.dateRange[0])
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
 
+    const type = body?.type;
+
+    const stages = body?.stages;
+    const stagesIds = stages.map((stage) => stage._id);
+
     const tags = body?.tags || [];
     const tagIds = tags.map((tag) => tag._id);
+
+    const users = body?.users || [];
+    const userIds = users.map((user) => user._id);
+
     const query = {
-      tags: { $in: tagIds },
       workAt: {
         $ne: null,
         $gte: startDate,
         $lte: endDate,
       },
-      type: { $ne: 'private' },
     };
 
-    if (stage && Object.keys(stage).length > 0) {
-      query.stage = stage;
+    if (userIds && Object.keys(userIds).length > 0) {
+      query.user = { $in: userIds };
     }
-    const conversations = await ConversationModel.find(query).populate('tags');
+
+    if (tagIds && Object.keys(tagIds).length > 0) {
+      query.tags = { $in: tagIds };
+    }
+
+    if (stages && Object.keys(stages).length > 0) {
+      query.stage = { $in: stagesIds };
+    }
+
+    if (type?.value) {
+      if (type?.value === 'group') query.type = 'supergroup';
+      if (type?.value === 'private') query.type = 'private';
+    }
+
+    const conversations = await ConversationModel.find(query)
+      .populate('tags')
+      .populate('user')
+      .populate('stage');
+    console.log(conversations);
+    console.log(query);
 
     const groupedRows = {};
 
@@ -351,41 +387,48 @@ class StageHistoryService {
       groupedRows[tag._id] = {
         id: tag._id,
         path: [tag.value],
+        children: {},
         chatCount: 0,
-        chats: [], // Add a new property to store the chats for each tag
       };
     });
 
     conversations.forEach((conversation) => {
-      conversation.tags.forEach((tag) => {
-        if (groupedRows[tag._id]) {
-          groupedRows[tag._id].chatCount++;
-          groupedRows[tag._id].chats.push(conversation); // Store the chat in the corresponding tag's chats array
+      const tagIds = conversation.tags.map((tag) => tag._id);
+
+      tagIds.forEach((tagId) => {
+        if (!groupedRows[tagId]) return;
+
+        // Increment the tag's chat count
+        groupedRows[tagId].chatCount++;
+
+        const tagValue = groupedRows[tagId].path[0];
+
+        const userName = conversation?.user
+          ? conversation.user.username
+          : 'Нет менеджера';
+
+        if (!groupedRows[tagId].children[userName]) {
+          groupedRows[tagId].children[userName] = {
+            id: `${tagId}-${userName}`,
+            path: [tagValue, userName],
+            chats: [],
+            chatCount: 0,
+          };
         }
+
+        groupedRows[tagId].children[userName].chats.push(conversation);
       });
     });
 
-    const rows = Object.values(groupedRows).flatMap((row) => {
-      const chatRows = row.chats.map((chat, index) => ({
-        path: [...row.path, `${chat.title} (${chat.chat_id})`], // Include the chat title in the path
-        id: `${row.id}-${chat._id}`, // Set the ID based on the tag and chat ID
-        chatCount: '',
-        percent: '',
-        ...chat.toObject(),
-      }));
-
-      return [
-        {
-          ...row,
-          chatCount: row.chatCount,
-          percent:
-            ((row.chatCount / conversations.length) * 100).toFixed(2) + '%',
-        },
-        ...chatRows,
-      ];
-    });
-
+    const rows = [];
     const columns = [
+      {
+        field: 'chatStatus',
+        headerName: 'Статус',
+        headerAlign: 'center',
+        align: 'center',
+        flex: 1,
+      },
       {
         field: 'chatCount',
         headerName: 'Количество чатов',
@@ -402,7 +445,49 @@ class StageHistoryService {
       },
     ];
 
-    console.log(rows);
+    Object.values(groupedRows).forEach((tagRow) => {
+      let tagChatCount = 0;
+      const userRows = Object.values(tagRow.children).map((userRow) => {
+        const chatCount = userRow.chats.length;
+
+        tagChatCount += chatCount;
+
+        const chatRows = userRow.chats.map((chat) => {
+          console.log(chat);
+          rows.push({
+            path: [...userRow.path, `${chat.title} (${chat.chat_id})`],
+            id: `${userRow.id}-${chat._id}`,
+            chatStatus: chat?.stage?.label,
+            percent: '',
+            ...chat.toObject(),
+          });
+        });
+
+        return {
+          ...userRow,
+          chatCount,
+          chats: chatRows,
+          percent: '',
+        };
+      });
+
+      const tagRowWithTotal = {
+        ...tagRow,
+        chatCount: tagChatCount,
+        chats: userRows.flatMap((userRow) => userRow.chats),
+        percent: '',
+      };
+
+      rows.push(tagRowWithTotal, ...userRows);
+    });
+
+    rows.forEach((row) => {
+      const percent =
+        row?.chatCount > 0
+          ? ((row.chatCount / conversations.length) * 100).toFixed(0)
+          : '';
+      if (row?.chatCount) row.percent = percent + '%';
+    });
 
     return { rows, columns };
   }

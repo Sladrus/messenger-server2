@@ -5,6 +5,6 @@ const router = new Router();
 router.get('/static/weeks', stageHistoryController.getByWeeksStatic);
 router.get('/dynamic/weeks', stageHistoryController.getByWeeksDynamic);
 router.post('/dynamic/users', stageHistoryController.getByUsers);
-router.post('/dynamic/tags', stageHistoryController.getByWeRefused);
+router.post('/dynamic/tags', stageHistoryController.getByTags);
 
 module.exports = router;

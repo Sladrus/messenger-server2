@@ -1,9 +1,8 @@
 const {
-  getByWeeks,
   getByWeeksStatic,
   getByWeeksDynamic,
   getByUsers,
-  getByWeRefused,
+  getByTags,
 } = require('../service/stageHistoryService');
 
 class StageHistoryController {
@@ -40,10 +39,10 @@ class StageHistoryController {
     }
   }
 
-  async getByWeRefused(req, res, next) {
+  async getByTags(req, res, next) {
     try {
       const body = req.body;
-      const result = await getByWeRefused(body);
+      const result = await getByTags(body);
       return res.json(result);
     } catch (e) {
       console.log(e);
