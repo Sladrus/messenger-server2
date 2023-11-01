@@ -296,6 +296,7 @@ class StageHistoryService {
   }
 
   async getByUsers(body) {
+    console.log(body);
     const startDate = body.dateRange[0]
       ? new Date(body.dateRange[0])
       : new Date(0);
@@ -337,6 +338,10 @@ class StageHistoryService {
     );
 
     const rows = Object.keys(groupedConversations).flatMap((user) => {
+      console.log(
+        `${formatDateString(startDate)}-${formatDateString(endDate)}`
+      );
+
       const userRow = {
         path: [user],
         id: user,
