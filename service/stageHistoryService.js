@@ -309,6 +309,7 @@ class StageHistoryService {
         $ne: null,
         $gte: startDate,
         $lte: endDate,
+        $lt: endDate,
       },
       stage: { $ne: null },
     };
