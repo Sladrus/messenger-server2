@@ -6,9 +6,10 @@ const { StageModel } = require('../models/stageModel');
 const { TagModel } = require('../models/tagModel');
 
 function formatDateString(date) {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear()).slice(-2);
+  const localDate = new Date(date.toLocaleString());
+  const day = String(localDate.getDate()).padStart(2, '0');
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const year = String(localDate.getFullYear()).slice(-2);
 
   return `${day}.${month}.${year}`;
 }
@@ -301,6 +302,7 @@ class StageHistoryService {
       ? new Date(body.dateRange[0])
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
+
     console.log(startDate, endDate);
     const type = body?.type;
 
@@ -309,7 +311,6 @@ class StageHistoryService {
         $ne: null,
         $gte: startDate,
         $lte: endDate,
-        $lt: endDate,
       },
       stage: { $ne: null },
     };
