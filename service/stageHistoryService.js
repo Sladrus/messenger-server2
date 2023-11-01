@@ -15,7 +15,7 @@ function formatDateString(date) {
     timeZone: 'Europe/Moscow',
   };
 
-  return date.toLocaleString('en-GB', options);
+  return date.toLocaleString('ru-RU', options);
 }
 
 class StageHistoryService {
