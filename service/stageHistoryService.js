@@ -23,7 +23,18 @@ class StageHistoryService {
     return record;
   }
 
-  async getByWeeksStatic() {
+  async getByWeeksStatic(body) {
+    const startDate = body.dateRange[0]
+      ? new Date(body.dateRange[0])
+      : new Date(0);
+    const endDate = new Date(body.dateRange[1]);
+
+    const type = body?.type;
+    const stages = await StageModel.find({
+      type: { $in: [type.value, 'all'] },
+    }).sort({
+      position: 1,
+    });
     const result = await StageHistoryModel.aggregate([
       {
         $lookup: {
@@ -70,8 +81,110 @@ class StageHistoryService {
         week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
       );
     });
-    // console.log(result);
-    return result;
+    console.log(result);
+    const rows = [];
+    const uniqueChats = new Set(); // Use a Set to store unique chats
+
+    result.forEach((week) => {
+      let totalCount = 0; // Initialize the total count of chats
+
+      const weekPath = `Неделя ${week._id.week}`;
+      const chatCountByStatus = {}; // Initialize an object to store the count of chats by status
+
+      week.records.forEach((record) => {
+        let chatCount = 0;
+
+        const chatStatus = record.stage[0]?.value;
+
+        if (!(chatStatus in chatCountByStatus)) {
+          chatCountByStatus[chatStatus] = ''; // Initialize the count for a new status with an empty string
+        }
+
+        if (!uniqueChats.has(record.conversation[0]?.title)) {
+          // Check if the chat has already been added
+          chatCountByStatus[chatStatus]++; // Increment the count for the status
+          uniqueChats.add(record.conversation[0]?.title); // Add the chat to the set of unique chats
+
+          const chatStatusCount = {};
+          stages.forEach((stage) => {
+            const stageValue = stage.value;
+            chatStatusCount[stageValue] = '';
+          });
+          chatStatusCount[chatStatus]++;
+          console.log(chatStatusCount);
+          chatCount += Object.values(chatStatusCount).reduce(
+            (a, b) => Number(a) + Number(b),
+            0
+          );
+
+          rows.push({
+            id: `${week._id.week}-${record.conversation[0]?._id}`,
+            path: [weekPath, `${record.conversation[0]?.title}`],
+            date: formatDateString(week._id.createdAt),
+            ...chatStatusCount,
+            chatCount: chatCount,
+          });
+        } else {
+          const existingChatRow = rows.find(
+            (row) =>
+              row.id === `${week._id.week}-${record.conversation[0]?._id}`
+          );
+
+          if (existingChatRow) {
+            existingChatRow[chatStatus]++;
+            existingChatRow.chatCount++;
+          }
+          chatCountByStatus[chatStatus]++;
+        }
+      });
+
+      totalCount += week.records.length;
+
+      rows.push({
+        id: `${week._id.week}`,
+        path: [weekPath],
+        date: `${formatDateString(week.startDate)}-${formatDateString(
+          week.endDate
+        )}`,
+        ...chatCountByStatus,
+        chatCount: totalCount,
+      });
+    });
+
+    const statusColumns = stages.map((stage) => {
+      const stageLabel = stage.label;
+      const stageValue = stage.value;
+      return {
+        field: stageValue,
+        headerName: stageLabel,
+        headerAlign: 'center',
+        align: 'center',
+        minWidth: 140,
+        flex: 1,
+      };
+    });
+
+    const columns = [
+      {
+        field: 'date',
+        headerName: 'Date',
+        headerAlign: 'center',
+        align: 'center',
+        minWidth: 140,
+        flex: 1,
+      },
+      ...statusColumns,
+      {
+        field: 'chatCount',
+        headerName: 'Всего',
+        headerAlign: 'center',
+        align: 'center',
+        minWidth: 140,
+        flex: 1,
+      },
+    ];
+    console.log(rows);
+    return { rows, columns };
   }
 
   async getByWeeksDynamic() {
@@ -172,7 +285,6 @@ class StageHistoryService {
                 path: [week, user, chat],
                 date: conversation.updatedAt,
                 [fieldName]: conversation.stage,
-                //как тут сделать чтобы названеи поля было значением conversation.stage.value
                 id: conversation._id,
               };
             }
@@ -184,13 +296,10 @@ class StageHistoryService {
 
       return [weekRow, ...userRows];
     });
-    console.log(rows);
     return rows;
   }
 
   async getByUsers(body) {
-    console.log(body);
-
     const startDate = body.dateRange[0]
       ? new Date(body.dateRange[0])
       : new Date(0);
@@ -331,8 +440,6 @@ class StageHistoryService {
   }
 
   async getByTags(body) {
-    console.log(body);
-
     const startDate = body.dateRange[0]
       ? new Date(body.dateRange[0])
       : new Date(0);
@@ -378,8 +485,6 @@ class StageHistoryService {
       .populate('tags')
       .populate('user')
       .populate('stage');
-    console.log(conversations);
-    console.log(query);
 
     const groupedRows = {};
 
@@ -397,8 +502,6 @@ class StageHistoryService {
 
       tagIds.forEach((tagId) => {
         if (!groupedRows[tagId]) return;
-
-        // Increment the tag's chat count
         groupedRows[tagId].chatCount++;
 
         const tagValue = groupedRows[tagId].path[0];
@@ -482,7 +585,6 @@ class StageHistoryService {
           matchingUserRow.percent = userRow.percent;
         }
       });
-      console.log(tagChatCount, conversations.length);
       const tagRowWithTotal = {
         ...tagRow,
         chatCount: tagChatCount,
@@ -492,7 +594,6 @@ class StageHistoryService {
             ? ((tagChatCount / conversations.length) * 100).toFixed(0) + '%'
             : '',
       };
-      console.log(userRows);
       rows.push(tagRowWithTotal, ...userRows);
     });
 
