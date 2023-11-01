@@ -81,7 +81,6 @@ class StageHistoryService {
         week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
       );
     });
-    console.log(result);
     const rows = [];
     const uniqueChats = new Set(); // Use a Set to store unique chats
 
@@ -111,7 +110,6 @@ class StageHistoryService {
             chatStatusCount[stageValue] = '';
           });
           chatStatusCount[chatStatus]++;
-          console.log(chatStatusCount);
           chatCount += Object.values(chatStatusCount).reduce(
             (a, b) => Number(a) + Number(b),
             0
@@ -183,7 +181,6 @@ class StageHistoryService {
         flex: 1,
       },
     ];
-    console.log(rows);
     return { rows, columns };
   }
 
@@ -241,7 +238,6 @@ class StageHistoryService {
       .populate({ path: 'stage' });
     const groupedConversations = conversations.reduce(
       (result, conversation) => {
-        console.log(conversation);
         const week = `${getWeekNumber(conversation?.workAt)} неделя `; // Get the week number from the conversation's createdAt date
         const user = conversation.user?.username || 'Нет менеджера';
         const chat = conversation.title;
