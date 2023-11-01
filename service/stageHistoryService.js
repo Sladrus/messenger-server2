@@ -6,12 +6,16 @@ const { StageModel } = require('../models/stageModel');
 const { TagModel } = require('../models/tagModel');
 
 function formatDateString(date) {
-  const localDate = new Date(date.toLocaleString());
-  const day = String(localDate.getDate()).padStart(2, '0');
-  const month = String(localDate.getMonth() + 1).padStart(2, '0');
-  const year = String(localDate.getFullYear()).slice(-2);
+  const options = {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: 'numeric',
+    minute: 'numeric',
+    timeZone: 'Europe/Moscow',
+  };
 
-  return `${day}.${month}.${year}`;
+  return date.toLocaleString('en-GB', options);
 }
 
 class StageHistoryService {
