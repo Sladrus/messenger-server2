@@ -304,7 +304,7 @@ class StageHistoryService {
       ? new Date(body.dateRange[0])
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
-
+    console.log(startDate, endDate);
     const type = body?.type;
 
     const query = {
