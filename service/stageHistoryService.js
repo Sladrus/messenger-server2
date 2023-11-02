@@ -125,7 +125,6 @@ class StageHistoryService {
         },
       },
     ]);
-    console.log(result);
 
     const rows = [];
     // const uniqueChats = new Set(); // Use a Set to store unique chats
@@ -154,7 +153,6 @@ class StageHistoryService {
       rows.push(weekRow);
 
       week.records.forEach((record) => {
-        // console.log(record.conversation);
 
         const userPath = record.conversation?.user?.username || 'Нет менеджера';
         const userRow = {
@@ -176,24 +174,12 @@ class StageHistoryService {
           stages.forEach((stage) => {
             chatRow[stage.value] = '';
           });
-          // console.log(
-          //   !rows.find((row) => {
-          //     console.log(
-          //       row.path.join('/'),
-          //       `${weekPath}/${userPath}/${chatPath}`
-          //     );
-          //     return (
-          //       row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
-          //     );
-          //   })
-          // );
           if (
             !rows.find(
               (row) =>
                 row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
             )
           ) {
-            // console.log(chatRow);
             rows.push(chatRow);
           }
         } else {
@@ -223,6 +209,7 @@ class StageHistoryService {
           if (userRow && chatRow) {
             userRow[record.stage.value]++;
             chatRow[record.stage.value]++;
+            weekRow[record.stage.value]++;
           }
         }
       });
