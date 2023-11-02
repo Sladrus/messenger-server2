@@ -176,24 +176,24 @@ class StageHistoryService {
           stages.forEach((stage) => {
             chatRow[stage.value] = '';
           });
-          console.log(
-            !rows.find((row) => {
-              console.log(
-                row.path.join('/'),
-                `${weekPath}/${userPath}/${chatPath}`
-              );
-              return (
-                row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
-              );
-            })
-          );
+          // console.log(
+          //   !rows.find((row) => {
+          //     console.log(
+          //       row.path.join('/'),
+          //       `${weekPath}/${userPath}/${chatPath}`
+          //     );
+          //     return (
+          //       row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+          //     );
+          //   })
+          // );
           if (
             !rows.find(
               (row) =>
                 row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
             )
           ) {
-            console.log(chatRow);
+            // console.log(chatRow);
             rows.push(chatRow);
           }
         } else {
@@ -359,13 +359,11 @@ class StageHistoryService {
   }
 
   async getByUsers(body) {
-    console.log(body);
     const startDate = body.dateRange[0]
       ? new Date(body.dateRange[0])
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
 
-    console.log(startDate, endDate);
     const type = body?.type;
 
     const query = {
@@ -402,10 +400,6 @@ class StageHistoryService {
     );
 
     const rows = Object.keys(groupedConversations).flatMap((user) => {
-      console.log(
-        `${formatDateString(startDate)}-${formatDateString(endDate)}`
-      );
-
       const userRow = {
         path: [user],
         id: user,
