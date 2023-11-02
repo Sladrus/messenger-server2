@@ -183,48 +183,43 @@ class StageHistoryService {
                 row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
             )
           ) {
-            chatRow[record.stage.value]++;
-            userRow[record.stage.value]++;
-            weekRow[record.stage.value]++;
             rows.push(chatRow);
           }
         } else {
-          userRow[record.stage.value]++;
-          weekRow[record.stage.value]++;
           rows.push(userRow);
         }
       });
     });
 
-    // result.forEach((week) => {
-    //   const weekPath = `Неделя ${week._id.week}`;
-    //   const weekRow = rows.find((row) => row.path.join('/') === weekPath);
+    result.forEach((week) => {
+      const weekPath = `Неделя ${week._id.week}`;
+      const weekRow = rows.find((row) => row.path.join('/') === weekPath);
 
-    //   week.records.forEach((record) => {
-    //     const userPath = record.conversation.user?.username || 'Нет менеджера';
-    //     const chatPath = record.conversation?.title;
+      week.records.forEach((record) => {
+        const userPath = record.conversation.user?.username || 'Нет менеджера';
+        const chatPath = record.conversation?.title;
 
-    //     if (userPath && chatPath) {
-    //       const userRow = rows.find(
-    //         (row) => row.path.join('/') === `${weekPath}/${userPath}`
-    //       );
-    //       const chatRow = rows.find(
-    //         (row) =>
-    //           row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
-    //       );
+        if (userPath && chatPath) {
+          const userRow = rows.find(
+            (row) => row.path.join('/') === `${weekPath}/${userPath}`
+          );
+          const chatRow = rows.find(
+            (row) =>
+              row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+          );
 
-    //       if (userRow && chatRow) {
-    //         userRow[record.stage.value]++;
-    //         chatRow[record.stage.value]++;
-    //         weekRow[record.stage.value]++;
-    //       }
-    //     }
-    //   });
+          if (userRow && chatRow) {
+            userRow[record.stage.value]++;
+            chatRow[record.stage.value]++;
+            weekRow[record.stage.value]++;
+          }
+        }
+      });
 
-    //   // weekRow.active = `${weekRow?.active} (${weekRow?.active || 0} / ${
-    //   //   weekRow?.raw || 0
-    //   // }) (${weekRow?.active || 0} / )`;
-    // });
+      // weekRow.active = `${weekRow?.active} (${weekRow?.active || 0} / ${
+      //   weekRow?.raw || 0
+      // }) (${weekRow?.active || 0} / )`;
+    });
 
     // let activeCount;
 
