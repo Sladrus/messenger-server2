@@ -34,12 +34,20 @@ class StageHistoryService {
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
 
-    const type = body?.type;
+    const typeValue = body?.type;
+    let type;
+
+    if (typeValue?.value) {
+      if (typeValue.value === 'group') type = 'supergroup';
+      if (typeValue.value === 'private') type = 'private';
+    }
+
     const stages = await StageModel.find({
-      type: { $in: [type.value, 'all'] },
+      type: { $in: [typeValue?.value, 'all'] },
     }).sort({
       position: 1,
     });
+
     const result = await StageHistoryModel.aggregate([
       {
         $lookup: {
@@ -58,6 +66,14 @@ class StageHistoryService {
         },
       },
       {
+        $unwind: '$conversation',
+      },
+      {
+        $match: {
+          'conversation.type': type,
+        },
+      },
+      {
         $project: {
           createdAt: {
             $dateFromParts: {
@@ -70,6 +86,14 @@ class StageHistoryService {
         },
       },
       {
+        $match: {
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      },
+      {
         $group: {
           _id: { week: { $week: '$createdAt' }, createdAt: '$createdAt' },
           startDate: { $min: '$createdAt' },
@@ -77,7 +101,17 @@ class StageHistoryService {
           records: { $push: '$$ROOT' },
         },
       },
+      // {
+      //   $unwind: '$conversation',
+      // },
+      // {
+      //   $match: {
+      //     'conversation.type': { $in: [type, 'all'] },
+      //   },
+      // },
     ]);
+    console.log(result);
+
     result.forEach((week) => {
       week.startDate.setDate(
         week.startDate.getDate() - ((week.startDate.getDay() + 6) % 7)
