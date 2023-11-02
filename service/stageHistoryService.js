@@ -184,6 +184,9 @@ class StageHistoryService {
             )
           ) {
             rows.push(chatRow);
+            userRow[record.stage.value]++;
+            chatRow[record.stage.value]++;
+            weekRow[record.stage.value]++;
           }
         } else {
           rows.push(userRow);
@@ -191,57 +194,51 @@ class StageHistoryService {
       });
     });
 
-    result.forEach((week) => {
-      const weekPath = `Неделя ${week._id.week}`;
-      const weekRow = rows.find((row) => row.path.join('/') === weekPath);
+    // result.forEach((week) => {
+    //   const weekPath = `Неделя ${week._id.week}`;
+    //   const weekRow = rows.find((row) => row.path.join('/') === weekPath);
 
-      week.records.forEach((record) => {
-        const userPath = record.conversation.user?.username || 'Нет менеджера';
-        const chatPath = record.conversation?.title;
+    //   week.records.forEach((record) => {
+    //     const userPath = record.conversation.user?.username || 'Нет менеджера';
+    //     const chatPath = record.conversation?.title;
 
-        if (userPath && chatPath) {
-          const userRow = rows.find(
-            (row) => row.path.join('/') === `${weekPath}/${userPath}`
-          );
-          const chatRow = rows.find(
-            (row) =>
-              row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
-          );
+    //     if (userPath && chatPath) {
+    //       const userRow = rows.find(
+    //         (row) => row.path.join('/') === `${weekPath}/${userPath}`
+    //       );
+    //       const chatRow = rows.find(
+    //         (row) =>
+    //           row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+    //       );
 
-          if (userRow && chatRow) {
-            userRow[record.stage.value]++;
-            chatRow[record.stage.value]++;
-            weekRow[record.stage.value]++;
-          }
-        }
-      });
+    //       if (userRow && chatRow) {
+    //         userRow[record.stage.value]++;
+    //         chatRow[record.stage.value]++;
+    //         weekRow[record.stage.value]++;
+    //       }
+    //     }
+    //   });
 
-      // weekRow.active = `${weekRow?.active} (${weekRow?.active || 0} / ${
-      //   weekRow?.raw || 0
-      // }) (${weekRow?.active || 0} / )`;
-    });
+    //   // weekRow.active = `${weekRow?.active} (${weekRow?.active || 0} / ${
+    //   //   weekRow?.raw || 0
+    //   // }) (${weekRow?.active || 0} / )`;
+    // });
 
-    let activeCountByLength = {};
+    // let activeCount;
 
-    rows.forEach((row) => {
-      if (row.path.length === 1) {
-        // console.log(row);
-        if (!activeCountByLength[row.path]) {
-          activeCountByLength[row.path] = 0;
-        }
-        activeCountByLength[row.path] = 0; // сбрасываем счетчик при каждом новом row.path.length === 1
-      }
-      if (row.path.length === 3) {
-        // console.log(row);
-        if (row?.raw > 0 && row?.active > 0) {
-          if (!activeCountByLength[row.path]) {
-            activeCountByLength[row.path] = 0;
-          }
-          activeCountByLength[row.path]++;
-        }
-      }
-    });
-    console.log(activeCountByLength);
+    // for (const row of rows) {
+    //   // console.log(row);
+
+    //   if (row.path.length === 1) {
+    //     console.log(activeCount);
+    //     activeCount = 0;
+    //   }
+    //   if (row.path.length === 3) {
+    //     activeCount++;
+    //   }
+    // }
+
+    console.log('');
     const statusColumns = stages.map((stage) => {
       const stageLabel = stage.label;
       const stageValue = stage.value;
