@@ -33,7 +33,7 @@ class StageHistoryService {
       ? new Date(body.dateRange[0])
       : new Date(0);
     const endDate = new Date(body.dateRange[1]);
-
+    const period = body?.period;
     const typeValue = body?.type;
     let type;
 
@@ -99,10 +99,16 @@ class StageHistoryService {
       {
         $project: {
           createdAt: {
-            $dateFromParts: {
-              isoWeekYear: { $isoWeekYear: '$createdAt' },
-              isoWeek: { $isoWeek: '$createdAt' },
-            },
+            $dateFromParts:
+              period.value === 'week'
+                ? {
+                    isoWeekYear: { $isoWeekYear: '$createdAt' },
+                    isoWeek: { $isoWeek: '$createdAt' },
+                  }
+                : {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                  },
           },
           stage: 1,
           conversation: 1,
@@ -133,14 +139,20 @@ class StageHistoryService {
     // const uniqueChats = new Set(); // Use a Set to store unique chats
 
     result.forEach((week) => {
-      week.startDate.setDate(
-        week.startDate.getDate() - ((week.startDate.getDay() + 6) % 7)
-      );
-      week.endDate.setDate(
-        week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
-      );
+      period.value === 'week'
+        ? week.startDate.setDate(
+            week.startDate.getDate() - ((week.startDate.getDay() + 6) % 7)
+          )
+        : week.startDate.setMonth(week.startDate.getMonth(), 1);
+      period.value === 'week'
+        ? week.endDate.setDate(
+            week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
+          )
+        : week.endDate.setMonth(week.endDate.getMonth() + 1, 0);
 
-      const weekPath = `Неделя ${week._id.week}`;
+      const weekPath = `${period.value === 'week' ? 'Неделя' : 'Месяц'} ${
+        week._id.week
+      }`;
 
       const weekRow = {
         path: [weekPath],
@@ -196,7 +208,9 @@ class StageHistoryService {
     });
 
     result.forEach((week) => {
-      const weekPath = `Неделя ${week._id.week}`;
+      const weekPath = `${period.value === 'week' ? 'Неделя' : 'Месяц'} ${
+        week._id.week
+      }`;
       const weekRow = rows.find((row) => row.path.join('/') === weekPath);
 
       week.records.forEach((record) => {
@@ -219,10 +233,6 @@ class StageHistoryService {
           }
         }
       });
-
-      // weekRow.active = `${weekRow?.active} (${weekRow?.active || 0} / ${
-      //   weekRow?.raw || 0
-      // }) (${weekRow?.active || 0} / )`;
     });
 
     result.forEach((week) => {
@@ -257,7 +267,6 @@ class StageHistoryService {
         ).toFixed(0)}%)`;
         userRow.active = `${userRow.active} (${user.count})`;
       }
-      console.log(users);
     });
 
     const statusColumns = stages.map((stage) => {
