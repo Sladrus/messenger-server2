@@ -145,6 +145,7 @@ class StageHistoryService {
       const weekRow = {
         path: [weekPath],
         id: [weekPath],
+        number: week._id.week,
         date: `${formatDateString(week.startDate)}-${formatDateString(
           week.endDate
         )}`,
@@ -161,6 +162,7 @@ class StageHistoryService {
         const userRow = {
           path: [weekPath, userPath],
           id: [weekPath, userPath],
+          number: week._id.week,
         };
         stages.forEach((stage) => {
           userRow[stage.value] = '';
@@ -173,6 +175,7 @@ class StageHistoryService {
           const chatRow = {
             path: [weekPath, userPath, chatPath],
             id: [weekPath, userPath, chatPath],
+            number: week._id.week,
           };
           stages.forEach((stage) => {
             chatRow[stage.value] = '';
@@ -221,6 +224,17 @@ class StageHistoryService {
       // }) (${weekRow?.active || 0} / )`;
     });
 
+    result.forEach((week) => {
+      const number = week._id.week;
+      const activeCount = 0;
+
+      rows.forEach((row) => {
+        if (row.path.length === 3 && row.number === number) {
+          if (row?.active > 0 && row?.raw > 0) activeCount++;
+        }
+      });
+      console.log(number, activeCount);
+    });
     // let activeCount;
 
     // for (const row of rows) {
