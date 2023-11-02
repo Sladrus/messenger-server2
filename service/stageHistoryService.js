@@ -124,7 +124,13 @@ class StageHistoryService {
       },
       {
         $group: {
-          _id: { week: { $week: '$createdAt' }, createdAt: '$createdAt' },
+          _id: {
+            week:
+              period.value === 'week'
+                ? { $week: '$createdAt' }
+                : { $month: '$createdAt' },
+            createdAt: '$createdAt',
+          },
           startDate: { $min: '$createdAt' },
           endDate: { $max: '$createdAt' },
           records: { $push: '$$ROOT' },
