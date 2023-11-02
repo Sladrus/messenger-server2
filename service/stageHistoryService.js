@@ -236,9 +236,9 @@ class StageHistoryService {
       });
       console.log(number, activeAndRawCount);
       const row = rows.find((row) => row.number === number);
-      row.cr = `${row.active || 0 / row.raw || 0 * 100} (${
-        activeAndRawCount || 0 / row.raw || 0 * 100
-      })`;
+      row.cr = `${(row.active || 0 / row.raw || 0) * 100}% (${
+        (activeAndRawCount || 0 / row.raw || 0) * 100
+      }%)`;
       row.active = `${row.active} (${activeAndRawCount})`;
     });
 
