@@ -226,14 +226,19 @@ class StageHistoryService {
 
     result.forEach((week) => {
       const number = week._id.week;
-      let activeCount = 0;
+      let activeAndRawCount = 0;
 
       rows.forEach((row) => {
         if (row.path.length === 3 && row.number === number) {
-          if (row?.active > 0 && row?.raw > 0) activeCount++;
+          if (row?.active > 0 && row?.raw > 0) activeAndRawCount++;
         }
       });
-      console.log(number, activeCount);
+      console.log(number, activeAndRawCount);
+      const row = rows.find(
+        (row) => row.number === number
+      );
+
+      row.active = `${row.active} (${activeAndRawCount})`
     });
     // let activeCount;
 
