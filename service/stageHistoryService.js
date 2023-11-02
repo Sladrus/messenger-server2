@@ -241,12 +241,22 @@ class StageHistoryService {
           }
         }
       });
-      const row = rows.find((row) => row.number === number);
-      row.cr = `${((row.active / row.raw) * 100).toFixed(0)}% (${(
-        (activeAndRawCount / row.raw) *
+      const weekRow = rows.find((row) => row.number === number);
+      weekRow.cr = `${((weekRow.active / weekRow.raw) * 100).toFixed(0)}% (${(
+        (activeAndRawCount / weekRow.raw) *
         100
       ).toFixed(0)}%)`;
-      row.active = `${row.active} (${activeAndRawCount})`;
+      weekRow.active = `${weekRow.active} (${activeAndRawCount})`;
+      for (const user of users) {
+        const userRow = rows.find(
+          (row) => row.number === number && user.username === row.path[1]
+        );
+        userRow.cr = `${((userRow.active / userRow.raw) * 100).toFixed(0)}% (${(
+          (user.count / userRow.raw) *
+          100
+        ).toFixed(0)}%)`;
+        userRow.active = `${userRow.active} (${user.count})`;
+      }
       console.log(users);
     });
 
