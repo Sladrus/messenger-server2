@@ -228,10 +228,17 @@ class StageHistoryService {
     result.forEach((week) => {
       const number = week._id.week;
       let activeAndRawCount = 0;
-
+      const users = [];
       rows.forEach((row) => {
         if (row.path.length === 3 && row.number === number) {
-          if (row?.active > 0 && row?.raw > 0) activeAndRawCount++;
+          const user = users.find((user) => user.username === row.path[1]);
+
+          if (row?.active > 0 && row?.raw > 0) {
+            if (user) {
+              user.count++;
+            } else users.push({ username: row.path[1], count: 1 });
+            activeAndRawCount++;
+          }
         }
       });
       const row = rows.find((row) => row.number === number);
@@ -240,6 +247,7 @@ class StageHistoryService {
         100
       ).toFixed(0)}%)`;
       row.active = `${row.active} (${activeAndRawCount})`;
+      console.log(users);
     });
 
     const statusColumns = stages.map((stage) => {
