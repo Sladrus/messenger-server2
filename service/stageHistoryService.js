@@ -125,7 +125,7 @@ class StageHistoryService {
         },
       },
       {
-        $sort: { '_id.week': 1 },
+        $sort: { '_id.week': -1 },
       },
     ]);
 
@@ -150,7 +150,8 @@ class StageHistoryService {
         )}`,
       };
       stages.forEach((stage) => {
-        weekRow[stage.value] = '';
+        if (stage.value === 'active') weekRow[stage.value] = '0';
+        else weekRow[stage.value] = '';
       });
 
       rows.push(weekRow);
@@ -207,7 +208,6 @@ class StageHistoryService {
               row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
           );
 
-          // Increment the count for the corresponding stage column for each row
           if (userRow && chatRow) {
             userRow[record.stage.value]++;
             chatRow[record.stage.value]++;
@@ -215,6 +215,24 @@ class StageHistoryService {
           }
         }
       });
+
+      // weekRow.active = `${weekRow?.active} (${weekRow?.active || 0} / ${
+      //   weekRow?.raw || 0
+      // }) (${weekRow?.active || 0} / )`;
+    });
+
+    rows.forEach((row) => {
+      let activeCount;
+      if (row.path.length === 1) {
+        console.log(row);
+        console.log(activeCount);
+        activeCount = 0;
+      }
+      if (row.path.length === 3) {
+        if (row?.raw && row?.active) {
+          activeCount++;
+        }
+      }
     });
 
     const statusColumns = stages.map((stage) => {
@@ -242,109 +260,6 @@ class StageHistoryService {
       ...statusColumns,
     ];
     return { rows, columns };
-  }
-
-  async getByWeeksDynamic() {
-    function getWeekNumber(date) {
-      if (!date) return;
-
-      const onejan = new Date(date.getFullYear(), 0, 1);
-      const weekNumber = Math.ceil(
-        ((date - onejan) / 86400000 + onejan.getDay() + 1) / 7
-      );
-      return weekNumber;
-    }
-
-    function getWeekStartDate(week) {
-      const year = new Date().getFullYear();
-      const weekNumber = parseInt(week.split(' ')[0]);
-
-      const firstDayOfYear = new Date(year, 0, 1);
-      const firstWeekDay = firstDayOfYear.getDay();
-
-      const startDate = new Date(
-        year,
-        0,
-        (weekNumber - 1) * 7 + 2 - firstWeekDay
-      );
-
-      return formatDateString(startDate);
-    }
-
-    function getWeekEndDate(week) {
-      const year = new Date().getFullYear();
-      const weekNumber = parseInt(week.split(' ')[0]);
-
-      const firstDayOfYear = new Date(year, 0, 1);
-      const firstWeekDay = firstDayOfYear.getDay();
-
-      const endDate = new Date(year, 0, weekNumber * 7 - firstWeekDay + 1);
-
-      return formatDateString(endDate);
-    }
-
-    const conversations = await ConversationModel.find()
-      .populate({
-        path: 'user',
-      })
-      .populate({ path: 'stage' });
-    const groupedConversations = conversations.reduce(
-      (result, conversation) => {
-        const week = `${getWeekNumber(conversation?.workAt)} неделя `; // Get the week number from the conversation's createdAt date
-        const user = conversation.user?.username || 'Нет менеджера';
-        const chat = conversation.title;
-        const stage = conversation.stage?.label; // Добавляем получение статуса чата
-
-        result[week] = result[week] || {};
-        result[week][user] = result[week][user] || {};
-        result[week][user][chat] = conversation;
-
-        return result;
-      },
-      {}
-    );
-
-    const rows = Object.keys(groupedConversations).flatMap((week) => {
-      const weekRow = {
-        path: [week],
-        date: `${getWeekStartDate(week)}-${getWeekEndDate(week)}`,
-        id: `${week}`,
-        chatCount: Object.keys(groupedConversations[week]).reduce(
-          (count, user) => {
-            return count + Object.keys(groupedConversations[week][user]).length;
-          },
-          0
-        ),
-      };
-      const userRows = Object.keys(groupedConversations[week]).flatMap(
-        (user) => {
-          const userRow = {
-            path: [week, user],
-            date: `${getWeekStartDate(week)} - ${getWeekEndDate(week)}`,
-            id: `${week}-${user}`,
-            chatCount: Object.keys(groupedConversations[week][user]).length,
-          };
-          const chatRows = Object.keys(groupedConversations[week][user]).map(
-            (chat, index) => {
-              const conversation = groupedConversations[week][user][chat];
-              const fieldName = conversation.stage;
-
-              return {
-                path: [week, user, chat],
-                date: conversation.updatedAt,
-                [fieldName]: conversation.stage,
-                id: conversation._id,
-              };
-            }
-          );
-
-          return [userRow, ...chatRows];
-        }
-      );
-
-      return [weekRow, ...userRows];
-    });
-    return rows;
   }
 
   async getByUsers(body) {
