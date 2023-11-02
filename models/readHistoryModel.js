@@ -6,6 +6,10 @@ var readHistorySchema = new Schema({
     ref: 'conversation',
     required: true,
   },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'user',
+  },
   createdAt: {
     type: Date,
     required: true,

@@ -1284,13 +1284,14 @@ module.exports = (io, socket) => {
     }
   };
 
-  const read = async ({ id }) => {
+  const read = async ({ id, user }) => {
     try {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
       });
-      await ReadHistoryModel.create({
+      const record = await ReadHistoryModel.create({
         conversation: new ObjectId(id),
+        user: new ObjectId(user._id),
         createdAt: new Date(),
       });
 
