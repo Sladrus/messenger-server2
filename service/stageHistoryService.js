@@ -421,7 +421,7 @@ class StageHistoryService {
         headerName: 'Дата',
         headerAlign: 'center',
         align: 'center',
-        minWidth: 140,
+        minWidth: 300,
       },
       ...statusColumns,
       {

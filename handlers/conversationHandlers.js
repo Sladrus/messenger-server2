@@ -9,6 +9,7 @@ const { StageModel } = require('../models/stageModel');
 const { telegramSendMessage } = require('../telegram');
 const { TaskModel } = require('../models/taskModel');
 const stageHistoryService = require('../service/stageHistoryService');
+const { ReadHistoryModel } = require('../models/readHistoryModel');
 const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
@@ -1288,6 +1289,11 @@ module.exports = (io, socket) => {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
       });
+      await ReadHistoryModel.create({
+        conversation: new ObjectId(id),
+        createdAt: new Date(),
+      });
+
       await ConversationModel.updateOne(
         { _id: new ObjectId(id) },
         {
