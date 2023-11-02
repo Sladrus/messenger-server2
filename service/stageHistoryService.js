@@ -124,6 +124,9 @@ class StageHistoryService {
           records: { $push: '$$ROOT' },
         },
       },
+      {
+        $sort: { '_id.week': 1 },
+      },
     ]);
 
     const rows = [];
@@ -153,7 +156,6 @@ class StageHistoryService {
       rows.push(weekRow);
 
       week.records.forEach((record) => {
-
         const userPath = record.conversation?.user?.username || 'Нет менеджера';
         const userRow = {
           path: [weekPath, userPath],
