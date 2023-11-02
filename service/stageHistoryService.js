@@ -226,7 +226,7 @@ class StageHistoryService {
 
     result.forEach((week) => {
       const number = week._id.week;
-      const activeCount = 0;
+      let activeCount = 0;
 
       rows.forEach((row) => {
         if (row.path.length === 3 && row.number === number) {
