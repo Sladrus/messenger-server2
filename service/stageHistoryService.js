@@ -235,9 +235,10 @@ class StageHistoryService {
         }
       });
       const row = rows.find((row) => row.number === number);
-      row.cr = `${(row.active / row.raw) * 100}% (${
-        (activeAndRawCount / row.raw) * 100
-      }%)`;
+      row.cr = `${((row.active / row.raw) * 100).toFixed(0)}% (${(
+        (activeAndRawCount / row.raw) *
+        100
+      ).toFixed(0)}%)`;
       row.active = `${row.active} (${activeAndRawCount})`;
     });
 
