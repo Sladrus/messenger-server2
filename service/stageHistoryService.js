@@ -221,20 +221,27 @@ class StageHistoryService {
       // }) (${weekRow?.active || 0} / )`;
     });
 
+    let activeCountByLength = {};
+
     rows.forEach((row) => {
-      let activeCount;
       if (row.path.length === 1) {
-        console.log(row);
-        console.log(activeCount);
-        activeCount = 0;
+        // console.log(row);
+        if (!activeCountByLength[row.path]) {
+          activeCountByLength[row.path] = 0;
+        }
+        activeCountByLength[row.path] = 0; // сбрасываем счетчик при каждом новом row.path.length === 1
       }
       if (row.path.length === 3) {
-        if (row?.raw && row?.active) {
-          activeCount++;
+        // console.log(row);
+        if (row?.raw > 0 && row?.active > 0) {
+          if (!activeCountByLength[row.path]) {
+            activeCountByLength[row.path] = 0;
+          }
+          activeCountByLength[row.path]++;
         }
       }
     });
-
+    console.log(activeCountByLength);
     const statusColumns = stages.map((stage) => {
       const stageLabel = stage.label;
       const stageValue = stage.value;
