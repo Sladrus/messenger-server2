@@ -675,10 +675,11 @@ module.exports = (io, socket) => {
         },
         { $set: { stage: new ObjectId(stageId), updatedAt: new Date() } }
       );
-      await stageHistoryService.create({
+      const history = await stageHistoryService.create({
         stageId: new ObjectId(stageId),
         convId: new ObjectId(id),
       });
+      console.log(history);
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);

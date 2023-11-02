@@ -74,13 +74,22 @@ class StageHistoryService {
       {
         $lookup: {
           from: 'users',
-          localField: 'conversation.user',
-          foreignField: '_id',
+          let: { userId: '$conversation.user' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$userId'] },
+              },
+            },
+          ],
           as: 'conversation.user',
         },
       },
       {
-        $unwind: '$conversation.user',
+        $unwind: {
+          path: '$conversation.user',
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $match: {
@@ -116,6 +125,7 @@ class StageHistoryService {
         },
       },
     ]);
+    console.log(result);
 
     const rows = [];
     // const uniqueChats = new Set(); // Use a Set to store unique chats
@@ -144,7 +154,9 @@ class StageHistoryService {
       rows.push(weekRow);
 
       week.records.forEach((record) => {
-        const userPath = record.conversation.user?.username || 'Нет менеджера';
+        // console.log(record.conversation);
+
+        const userPath = record.conversation?.user?.username || 'Нет менеджера';
         const userRow = {
           path: [weekPath, userPath],
           id: [weekPath, userPath],
@@ -154,11 +166,8 @@ class StageHistoryService {
         });
 
         if (
-          userPath &&
-          !rows.find((row) => row.path.join('/') === `${weekPath}/${userPath}`)
+          rows.find((row) => row.path.join('/') === `${weekPath}/${userPath}`)
         ) {
-          rows.push(userRow);
-
           const chatPath = record.conversation?.title;
           const chatRow = {
             path: [weekPath, userPath, chatPath],
@@ -167,7 +176,28 @@ class StageHistoryService {
           stages.forEach((stage) => {
             chatRow[stage.value] = '';
           });
-          rows.push(chatRow);
+          console.log(
+            !rows.find((row) => {
+              console.log(
+                row.path.join('/'),
+                `${weekPath}/${userPath}/${chatPath}`
+              );
+              return (
+                row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+              );
+            })
+          );
+          if (
+            !rows.find(
+              (row) =>
+                row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+            )
+          ) {
+            console.log(chatRow);
+            rows.push(chatRow);
+          }
+        } else {
+          rows.push(userRow);
         }
       });
     });
@@ -222,7 +252,6 @@ class StageHistoryService {
       },
       ...statusColumns,
     ];
-    console.log(rows);
     return { rows, columns };
   }
 
