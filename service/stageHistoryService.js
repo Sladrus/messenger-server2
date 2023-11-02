@@ -149,6 +149,7 @@ class StageHistoryService {
         date: `${formatDateString(week.startDate)}-${formatDateString(
           week.endDate
         )}`,
+        cr: '',
       };
       stages.forEach((stage) => {
         if (stage.value === 'active') weekRow[stage.value] = '0';
@@ -240,21 +241,7 @@ class StageHistoryService {
       })`;
       row.active = `${row.active} (${activeAndRawCount})`;
     });
-    // let activeCount;
 
-    // for (const row of rows) {
-    //   // console.log(row);
-
-    //   if (row.path.length === 1) {
-    //     console.log(activeCount);
-    //     activeCount = 0;
-    //   }
-    //   if (row.path.length === 3) {
-    //     activeCount++;
-    //   }
-    // }
-
-    console.log('');
     const statusColumns = stages.map((stage) => {
       const stageLabel = stage.label;
       const stageValue = stage.value;
