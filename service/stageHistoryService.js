@@ -183,10 +183,10 @@ class StageHistoryService {
                 row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
             )
           ) {
-            rows.push(chatRow);
             userRow[record.stage.value]++;
             chatRow[record.stage.value]++;
             weekRow[record.stage.value]++;
+            rows.push(chatRow);
           }
         } else {
           rows.push(userRow);
