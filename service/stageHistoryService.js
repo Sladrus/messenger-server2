@@ -58,6 +58,9 @@ class StageHistoryService {
         },
       },
       {
+        $unwind: '$stage',
+      },
+      {
         $lookup: {
           from: 'conversations',
           localField: 'conversation',
@@ -101,14 +104,6 @@ class StageHistoryService {
           records: { $push: '$$ROOT' },
         },
       },
-      // {
-      //   $unwind: '$conversation',
-      // },
-      // {
-      //   $match: {
-      //     'conversation.type': { $in: [type, 'all'] },
-      //   },
-      // },
     ]);
     console.log(result);
 
@@ -124,6 +119,7 @@ class StageHistoryService {
     const uniqueChats = new Set(); // Use a Set to store unique chats
 
     result.forEach((week) => {
+      console.log(week.records);
       let totalCount = 0; // Initialize the total count of chats
 
       const weekPath = `Неделя ${week._id.week}`;
@@ -132,16 +128,16 @@ class StageHistoryService {
       week.records.forEach((record) => {
         let chatCount = 0;
 
-        const chatStatus = record.stage[0]?.value;
+        const chatStatus = record.stage?.value;
 
         if (!(chatStatus in chatCountByStatus)) {
           chatCountByStatus[chatStatus] = ''; // Initialize the count for a new status with an empty string
         }
 
-        if (!uniqueChats.has(record.conversation[0]?.title)) {
+        if (!uniqueChats.has(record.conversation?.title)) {
           // Check if the chat has already been added
           chatCountByStatus[chatStatus]++; // Increment the count for the status
-          uniqueChats.add(record.conversation[0]?.title); // Add the chat to the set of unique chats
+          uniqueChats.add(record.conversation?.title); // Add the chat to the set of unique chats
 
           const chatStatusCount = {};
           stages.forEach((stage) => {
@@ -155,16 +151,15 @@ class StageHistoryService {
           );
 
           rows.push({
-            id: `${week._id.week}-${record.conversation[0]?._id}`,
-            path: [weekPath, `${record.conversation[0]?.title}`],
+            id: `${week._id.week}-${record.conversation?._id}`,
+            path: [weekPath, `${record.conversation?.title}`],
             date: formatDateString(week._id.createdAt),
             ...chatStatusCount,
             chatCount: chatCount,
           });
         } else {
           const existingChatRow = rows.find(
-            (row) =>
-              row.id === `${week._id.week}-${record.conversation[0]?._id}`
+            (row) => row.id === `${week._id.week}-${record.conversation?._id}`
           );
 
           if (existingChatRow) {
