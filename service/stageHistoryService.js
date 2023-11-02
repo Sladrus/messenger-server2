@@ -72,6 +72,17 @@ class StageHistoryService {
         $unwind: '$conversation',
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'conversation.user',
+          foreignField: '_id',
+          as: 'conversation.user',
+        },
+      },
+      {
+        $unwind: '$conversation.user',
+      },
+      {
         $match: {
           'conversation.type': type,
         },
@@ -105,7 +116,9 @@ class StageHistoryService {
         },
       },
     ]);
-    console.log(result);
+
+    const rows = [];
+    // const uniqueChats = new Set(); // Use a Set to store unique chats
 
     result.forEach((week) => {
       week.startDate.setDate(
@@ -114,72 +127,74 @@ class StageHistoryService {
       week.endDate.setDate(
         week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
       );
-    });
-    const rows = [];
-    const uniqueChats = new Set(); // Use a Set to store unique chats
-
-    result.forEach((week) => {
-      console.log(week.records);
-      let totalCount = 0; // Initialize the total count of chats
 
       const weekPath = `Неделя ${week._id.week}`;
-      const chatCountByStatus = {}; // Initialize an object to store the count of chats by status
 
-      week.records.forEach((record) => {
-        let chatCount = 0;
-
-        const chatStatus = record.stage?.value;
-
-        if (!(chatStatus in chatCountByStatus)) {
-          chatCountByStatus[chatStatus] = ''; // Initialize the count for a new status with an empty string
-        }
-
-        if (!uniqueChats.has(record.conversation?.title)) {
-          // Check if the chat has already been added
-          chatCountByStatus[chatStatus]++; // Increment the count for the status
-          uniqueChats.add(record.conversation?.title); // Add the chat to the set of unique chats
-
-          const chatStatusCount = {};
-          stages.forEach((stage) => {
-            const stageValue = stage.value;
-            chatStatusCount[stageValue] = '';
-          });
-          chatStatusCount[chatStatus]++;
-          chatCount += Object.values(chatStatusCount).reduce(
-            (a, b) => Number(a) + Number(b),
-            0
-          );
-
-          rows.push({
-            id: `${week._id.week}-${record.conversation?._id}`,
-            path: [weekPath, `${record.conversation?.title}`],
-            date: formatDateString(week._id.createdAt),
-            ...chatStatusCount,
-            chatCount: chatCount,
-          });
-        } else {
-          const existingChatRow = rows.find(
-            (row) => row.id === `${week._id.week}-${record.conversation?._id}`
-          );
-
-          if (existingChatRow) {
-            existingChatRow[chatStatus]++;
-            existingChatRow.chatCount++;
-          }
-          chatCountByStatus[chatStatus]++;
-        }
-      });
-
-      totalCount += week.records.length;
-
-      rows.push({
-        id: `${week._id.week}`,
+      const weekRow = {
         path: [weekPath],
+        id: [weekPath],
         date: `${formatDateString(week.startDate)}-${formatDateString(
           week.endDate
         )}`,
-        ...chatCountByStatus,
-        chatCount: totalCount,
+      };
+      stages.forEach((stage) => {
+        weekRow[stage.value] = '';
+      });
+
+      rows.push(weekRow);
+
+      week.records.forEach((record) => {
+        const userPath = record.conversation.user?.username || 'Нет менеджера';
+        const userRow = {
+          path: [weekPath, userPath],
+          id: [weekPath, userPath],
+        };
+        stages.forEach((stage) => {
+          userRow[stage.value] = '';
+        });
+
+        if (
+          userPath &&
+          !rows.find((row) => row.path.join('/') === `${weekPath}/${userPath}`)
+        ) {
+          rows.push(userRow);
+
+          const chatPath = record.conversation?.title;
+          const chatRow = {
+            path: [weekPath, userPath, chatPath],
+            id: [weekPath, userPath, chatPath],
+          };
+          stages.forEach((stage) => {
+            chatRow[stage.value] = '';
+          });
+          rows.push(chatRow);
+        }
+      });
+    });
+
+    result.forEach((week) => {
+      const weekPath = `Неделя ${week._id.week}`;
+      const weekRow = rows.find((row) => row.path.join('/') === weekPath);
+
+      week.records.forEach((record) => {
+        const userPath = record.conversation.user?.username || 'Нет менеджера';
+        const chatPath = record.conversation?.title;
+
+        if (userPath && chatPath) {
+          const userRow = rows.find(
+            (row) => row.path.join('/') === `${weekPath}/${userPath}`
+          );
+          const chatRow = rows.find(
+            (row) =>
+              row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+          );
+
+          // Increment the count for the corresponding stage column for each row
+          if (userRow && chatRow) {
+            userRow[record.stage.value]++;
+            chatRow[record.stage.value]++;
+          }
+        }
       });
     });
 
@@ -199,22 +214,15 @@ class StageHistoryService {
     const columns = [
       {
         field: 'date',
-        headerName: 'Date',
+        headerName: 'Период',
         headerAlign: 'center',
         align: 'center',
         minWidth: 140,
         flex: 1,
       },
       ...statusColumns,
-      {
-        field: 'chatCount',
-        headerName: 'Всего',
-        headerAlign: 'center',
-        align: 'center',
-        minWidth: 140,
-        flex: 1,
-      },
     ];
+    console.log(rows);
     return { rows, columns };
   }
 
