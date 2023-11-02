@@ -234,10 +234,9 @@ class StageHistoryService {
           if (row?.active > 0 && row?.raw > 0) activeAndRawCount++;
         }
       });
-      console.log(number, activeAndRawCount);
       const row = rows.find((row) => row.number === number);
-      row.cr = `${(row.active || 0 / row.raw || 0) * 100}% (${
-        (activeAndRawCount || 0 / row.raw || 0) * 100
+      row.cr = `${(row.active / row.raw) * 100}% (${
+        (activeAndRawCount / row.raw) * 100
       }%)`;
       row.active = `${row.active} (${activeAndRawCount})`;
     });
