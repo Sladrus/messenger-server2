@@ -47,11 +47,11 @@ async function getChatInfo(chat_id) {
   }
 }
 
-async function checkUser(username) {
+async function checkUser(value) {
   try {
     const response = await screenApi.post(`/contact`, {
-      value: username,
-      type: 'TGNAME',
+      value: value,
+      type: 'TGID',
     });
     return response.data;
   } catch (error) {
@@ -388,8 +388,8 @@ module.exports = (bot, io) => {
               },
             }
           );
-          if (msg.new_chat_member?.username) {
-            const response = await checkUser(msg.new_chat_member?.username);
+          if (msg.new_chat_member?.id) {
+            const response = await checkUser(msg.new_chat_member?.id);
             console.log(response);
           }
           await bot.sendMessage(
