@@ -1189,12 +1189,24 @@ module.exports = (io, socket) => {
     }
   };
 
+  const addTag = async ({ id, value }) => {
+    const tag = await TagModel.findOne({ value: value });
+    await ConversationModel.updateOne(
+      { _id: id },
+      { $push: { tags: tag._id }, $set: { updatedAt: new Date() } }
+    );
+    return tag;
+  };
+
   const createMoneysend = async ({ id, data }) => {
     try {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
       });
-      console.log('TYT', data, conversation);
+      const tag = await addTag({
+        id: conversation?._id,
+        value: 'Задача',
+      });
 
       if (!data?.link) {
         try {
@@ -1211,6 +1223,7 @@ module.exports = (io, socket) => {
           socket.emit('error', { message: e.message });
         }
       }
+
       var timestamp = Date.now();
       var date = new Date(timestamp);
       var formatOptions = {
