@@ -10,6 +10,7 @@ const registerNewMemberHandler = require('./new_chat_members');
 const registerChatCreatedHandler = require('./group_chat_created');
 const registerNewTitleHandler = require('./new_chat_title');
 const registerCallbackHandler = require('./callback_query');
+const registerWorkCommand = require('./work');
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
@@ -24,6 +25,8 @@ function registerBotHandlers(io) {
   registerChatCreatedHandler(bot, io);
   registerNewTitleHandler(bot, io);
   registerCallbackHandler(bot, io);
+  registerWorkCommand(bot, io);
+  bot.on("polling_error", console.log);
 }
 
 async function botSendMessage(chat_id, message, options) {

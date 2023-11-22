@@ -1,9 +1,7 @@
 const { default: mongoose } = require('mongoose');
-const ObjectId = mongoose.Types.ObjectId;
-
 const { ConversationModel } = require('../models/conversationModel');
-const { MessageModel } = require('../models/messageModel');
 const { StageModel } = require('../models/stageModel');
+const ObjectId = mongoose.Types.ObjectId;
 
 module.exports = (bot, io) => {
   const findOneConversation = async (id) => {
@@ -238,40 +236,4 @@ module.exports = (bot, io) => {
     const conversations = await ConversationModel.aggregate(pipeline);
     return io.emit('conversation:update', { conversation: conversations[0] });
   };
-
-  const createMessage = async (msg) => {
-    if (!msg.new_chat_member.user.is_bot) return;
-    const status = msg.new_chat_member.status;
-    try {
-      if (status === 'administrator') {
-        msg.type = 'event';
-        msg.text = 'Права администратора установлены.';
-        const m = await bot.sendMessage(msg.chat.id, msg.text);
-        const message = await MessageModel.create(msg);
-        console.log(message);
-        const stage = await StageModel.findOne({ value: 'raw' });
-        await ConversationModel.updateOne(
-          { chat_id: msg.chat.id },
-          {
-            $push: { messages: message._id },
-            $set: {
-              stage: stage._id,
-              updatedAt: new Date(),
-            },
-          }
-        );
-        const conversation = await ConversationModel.findOne({
-          chat_id: msg.chat.id,
-        });
-        return await findOneConversation(conversation?._id);
-      }
-    } catch (e) {
-      console.log(e);
-      io.emit('error', { message: e.message });
-    }
-  };
-
-  bot.on('my_chat_member', async (msg) => {
-    await createMessage(msg);
-  });
 };

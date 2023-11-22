@@ -3,6 +3,7 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const { ConversationModel } = require('../models/conversationModel');
 const { MessageModel } = require('../models/messageModel');
+const { StageModel } = require('../models/stageModel');
 
 module.exports = (bot, io) => {
   const findOneConversation = async (id) => {
@@ -270,6 +271,32 @@ module.exports = (bot, io) => {
   };
 
   bot.on('text', async (msg) => {
+    if (msg.text === '/work') {
+      try {
+        let conversation = await ConversationModel.findOne({
+          chat_id: Number(msg.chat.id),
+        });
+        const stage = await StageModel.findOne({ value: 'archive' });
+        if (!conversation?.workAt) {
+          await ConversationModel.updateOne(
+            {
+              _id: new ObjectId(conversation?._id),
+            },
+            {
+              $set: {
+                title: msg.chat.title,
+                stage: new ObjectId(stage._id),
+                workAt: Date.now(),
+                updatedAt: Date.now(),
+              },
+            }
+          );
+        }
+        // return await findOneConversation(conversation?._id);
+      } catch (e) {
+        console.log(e);
+      }
+    }
     await createMessage(msg);
   });
 };
