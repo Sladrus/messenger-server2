@@ -47,6 +47,15 @@ async function getChatInfo(chat_id) {
   }
 }
 
+async function getUser(value, type) {
+  try {
+    const response = await screenApi.get(`/contact/${value}/${type}`);
+    return response.data;
+  } catch (error) {
+    return;
+  }
+}
+
 async function checkUser(value) {
   try {
     const response = await screenApi.post(`/contact`, {
@@ -388,10 +397,17 @@ module.exports = (bot, io) => {
               },
             }
           );
-          if (msg.new_chat_member?.id) {
-            const response = await checkUser(msg.new_chat_member?.id);
-            console.log(response);
-          }
+          // if (msg.new_chat_member?.id) {
+          //   const byName = await getUser(
+          //     msg.new_chat_member?.username,
+          //     'TGNAME'
+          //   );
+          //   const byId = await getUser(msg.new_chat_member?.id, 'TGID');
+          //   if (byName && byId) {
+          //     const response = await checkUser(msg.new_chat_member?.id);
+          //     console.log(response);
+          //   }
+          // }
           await bot.sendMessage(
             -1001955007812,
             `Пользователь ${
