@@ -292,6 +292,11 @@ module.exports = (bot, io) => {
             }
           );
         }
+        await bot.sendMessage(
+          Number(msg.chat.id),
+          'Здравствуйте, операционист из-за лимитов на количество чатов выйдет из группы.\nСам чат работает в прежнем режиме. Если что-то потребуется, просто напишите сюда свой вопрос.\nСпасибо.'
+        );
+
         // return await findOneConversation(conversation?._id);
       } catch (e) {
         console.log(e);
