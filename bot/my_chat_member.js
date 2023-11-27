@@ -245,7 +245,7 @@ module.exports = (bot, io) => {
     try {
       if (status === 'administrator') {
         msg.type = 'event';
-        msg.text = 'Права администратора установлены.';
+        msg.text = 'Спасибо, чат взяла в работу.';
         const m = await bot.sendMessage(msg.chat.id, msg.text);
         const message = await MessageModel.create(msg);
         console.log(message);
