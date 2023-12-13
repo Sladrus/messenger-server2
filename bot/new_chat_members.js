@@ -29,8 +29,8 @@ const screenApi = axios.create({
 
 async function getOrder(chat_id) {
   try {
-    const response = await officeApi.get(
-      `/order?chat_id=${chat_id}&api_key=${officeToken}`
+    const response = await mpApi.get(
+      `/bot/get_order?chat_id=${chat_id}`
     );
     return response.data;
   } catch (error) {
