@@ -36,6 +36,7 @@ const findOneConversation = async (id, io) => {
         unreadCount: '$conversation.unreadCount',
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
+        members: '$conversation.members',
         workAt: '$conversation.workAt',
         lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
         stage: '$conversation.stage',
@@ -111,6 +112,9 @@ const findOneConversation = async (id, io) => {
         updatedAt: {
           $first: '$updatedAt',
         },
+        members: {
+          $first: '$members',
+        },
         workAt: {
           $first: '$workAt',
         },
@@ -158,6 +162,7 @@ const findOneConversation = async (id, io) => {
         unreadCount: 1,
         createdAt: 1,
         updatedAt: 1,
+        members: 1,
         workAt: 1,
         lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
         stage: {

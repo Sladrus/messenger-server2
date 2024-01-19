@@ -21,6 +21,7 @@ var conversationSchema = new Schema({
   tasks: [{ type: Schema.Types.ObjectId, ref: 'task' }],
   tags: [{ type: Schema.Types.ObjectId, ref: 'tag' }],
   link: { type: String },
+  refLink: [],
   workAt: {
     type: Date,
   },

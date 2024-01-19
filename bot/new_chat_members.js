@@ -27,11 +27,13 @@ const screenApi = axios.create({
   baseURL: 'http://client.1210059-cn07082.tw1.ru',
 });
 
+const linkApi = axios.create({
+  baseURL: 'http://link.1210059-cn07082.tw1.ru',
+});
+
 async function getOrder(chat_id) {
   try {
-    const response = await mpApi.get(
-      `/bot/get_order?chat_id=${chat_id}`
-    );
+    const response = await mpApi.get(`/bot/get_order?chat_id=${chat_id}`);
     return response.data;
   } catch (error) {
     return;
@@ -50,6 +52,15 @@ async function getChatInfo(chat_id) {
 async function getUser(value, type) {
   try {
     const response = await screenApi.get(`/contact/${value}/${type}`);
+    return response.data;
+  } catch (error) {
+    return;
+  }
+}
+
+async function getLinkByUser(userId) {
+  try {
+    const response = await linkApi.get(`/link?userId=${userId}`);
     return response.data;
   } catch (error) {
     return;
@@ -87,6 +98,7 @@ module.exports = (bot, io) => {
           unreadCount: '$conversation.unreadCount',
           createdAt: '$conversation.createdAt',
           updatedAt: '$conversation.updatedAt',
+          members: '$conversation.members',
           workAt: '$conversation.workAt',
           lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
           stage: '$conversation.stage',
@@ -220,6 +232,9 @@ module.exports = (bot, io) => {
           updatedAt: {
             $first: '$updatedAt',
           },
+          members: {
+            $first: '$members',
+          },
           workAt: {
             $first: '$workAt',
           },
@@ -278,6 +293,7 @@ module.exports = (bot, io) => {
           unreadCount: 1,
           createdAt: 1,
           updatedAt: 1,
+          members: 1,
           workAt: 1,
           lastMessage: {
             $mergeObjects: [
@@ -303,11 +319,17 @@ module.exports = (bot, io) => {
   };
 
   const addTag = async ({ id, value }) => {
-    const tag = await TagModel.findOne({ value: value });
-    await ConversationModel.updateOne(
-      { _id: id },
-      { $push: { tags: tag._id }, $set: { updatedAt: new Date() } }
-    );
+    let tag = await TagModel.findOne({ value: value });
+    console.log(tag);
+    if (!tag) tag = await TagModel.create({ value });
+    console.log(tag);
+    const conversation = await ConversationModel.findById(id);
+    if (!conversation?.tags?.includes(tag._id)) {
+      await ConversationModel.updateOne(
+        { _id: id },
+        { $push: { tags: tag._id }, $set: { updatedAt: new Date() } }
+      );
+    }
     return tag;
   };
 
@@ -383,6 +405,26 @@ module.exports = (bot, io) => {
               value: chatInfo?.issued_by,
             });
             console.log(tag);
+          }
+          const links = await getLinkByUser(msg.new_chat_member?.id);
+          console.log(links);
+          if (links?.length > 0) {
+            await ConversationModel.updateOne(
+              {
+                _id: new ObjectId(conversation?._id),
+              },
+              {
+                $set: {
+                  refLink: links,
+                },
+              }
+            );
+            for (const link of links) {
+              await addTag({
+                id: conversation?._id,
+                value: link?.name,
+              });
+            }
           }
           await ConversationModel.updateOne(
             {

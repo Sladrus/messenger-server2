@@ -24,6 +24,7 @@ module.exports = (bot, io) => {
           unreadCount: '$conversation.unreadCount',
           createdAt: '$conversation.createdAt',
           updatedAt: '$conversation.updatedAt',
+          members: '$conversation.members',
           workAt: '$conversation.workAt',
           lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
           stage: '$conversation.stage',
@@ -157,6 +158,9 @@ module.exports = (bot, io) => {
           updatedAt: {
             $first: '$updatedAt',
           },
+          members: {
+            $first: '$members',
+          },
           workAt: {
             $first: '$workAt',
           },
@@ -216,6 +220,7 @@ module.exports = (bot, io) => {
           createdAt: 1,
           updatedAt: 1,
           workAt: 1,
+          members: 1,
           lastMessage: {
             $mergeObjects: [
               { $arrayElemAt: ['$lastMessage', 0] }, // Extract the first element
