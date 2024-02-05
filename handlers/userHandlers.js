@@ -5,6 +5,7 @@ module.exports = (io, socket) => {
   const login = async ({ username, password }) => {
     try {
       const user = await UserModel.findOne({ email: username });
+      console.log(user)
       if (!user) throw new Error('Неверное имя пользователя или пароль');
       const isPasswordValid = await user.comparePassword(password);
       if (!isPasswordValid) throw new Error('Неверный пароль');
@@ -12,17 +13,14 @@ module.exports = (io, socket) => {
         user
       );
 
-      // Extract necessary information from the user object to avoid circular references
       const userData = {
         id: user._id,
         username: user.username,
         email: user.email,
-        // Add any other required properties
       };
 
       await tokenService.saveToken(user._id, refreshToken);
 
-      // Emit the event with the extracted user data
       return socket.emit('user', { user: userData, token: accessToken });
     } catch (e) {
       console.log(e);

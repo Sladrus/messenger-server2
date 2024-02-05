@@ -7,4 +7,6 @@ var tokenSchema = new Schema({
 
 const TokenModel = mongoose.model('Token', tokenSchema);
 
+// TokenModel.create({user: '65b9875bb6ab743105a7e6e0', })
+
 module.exports = { TokenModel };

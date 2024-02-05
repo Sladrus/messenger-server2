@@ -83,6 +83,6 @@ mongoose
   .then(() => console.log('Mongoose connected successfully'))
   .catch((error) => console.log(error));
 
-httpServer.listen(5005, () => {
+httpServer.listen(process.env.PORT, () => {
   console.log(`Server ready. Port: 5005`);
 });

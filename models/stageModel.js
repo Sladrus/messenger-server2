@@ -46,7 +46,7 @@ const defaultStages = [
     default: true,
     color: 'dodgerblue',
     value: 'raw',
-    position: 0,
+    position: 1,
     type: 'all',
   },
   {
@@ -54,7 +54,7 @@ const defaultStages = [
     default: true,
     color: 'gold',
     value: 'work',
-    position: 0,
+    position: 2,
     type: 'group',
   },
   {
@@ -62,7 +62,7 @@ const defaultStages = [
     default: true,
     color: 'limegreen',
     value: 'active',
-    position: 0,
+    position: 3,
     type: 'group',
   },
   {
@@ -70,7 +70,14 @@ const defaultStages = [
     default: true,
     color: 'brown',
     value: 'task',
-    position: 0,
+    position: 4,
+    type: 'group',
+  },  {
+    label: 'Архив',
+    default: true,
+    color: 'brown',
+    value: 'archive',
+    position: 5,
     type: 'group',
   },
 ];
