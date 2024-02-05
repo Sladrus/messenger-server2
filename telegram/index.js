@@ -306,10 +306,10 @@ const createMessage = async (event, io) => {
   }
 };
 
-// const client = new TelegramClient(storeSession, Number(apiId), apiHash, {
-//   connectionRetries: 5,
-// });
-const client = null;
+const client = new TelegramClient(storeSession, Number(apiId), apiHash, {
+  connectionRetries: 5,
+});
+// const client = null;
 
 async function telegramSendMessage(target, message) {
   const result = await client.sendMessage(target, { message });
@@ -317,7 +317,7 @@ async function telegramSendMessage(target, message) {
 }
 
 async function initClient(io) {
-  return
+  // return
   console.log('INIT');
   await client.start({
     phoneNumber: async () => await input.text('Please enter your number: '),
