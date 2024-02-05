@@ -61,19 +61,19 @@ async function getUser(value, type) {
 async function getLinkByUser(userId) {
   try {
     const response = await linkApi.get(`/link?userId=${userId}`);
-    return response.data;
+    return response?.data;
   } catch (error) {
     return;
   }
 }
 
-async function checkUser(value) {
+async function checkUser(value, type = 'TGID') {
   try {
     const response = await screenApi.post(`/user`, {
       value: value,
-      type: 'TGID',
+      type,
     });
-    return response.data;
+    return response?.data;
   } catch (error) {
     return;
   }
