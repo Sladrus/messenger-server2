@@ -439,16 +439,16 @@ module.exports = (bot, io) => {
               },
             }
           );
-          if (msg.new_chat_member?.id) {
-            // const byName = await getUser(
-            //   msg.new_chat_member?.username,
-            //   'TGNAME'
-            // );
-            const byId = await getUser(msg.new_chat_member?.id, 'TGID');
-            if (!byId) {
-              const response = await checkUser(msg.new_chat_member?.id);
-            }
-          }
+          // if (msg.new_chat_member?.id) {
+          //   // const byName = await getUser(
+          //   //   msg.new_chat_member?.username,
+          //   //   'TGNAME'
+          //   // );
+          //   // const byId = await getUser(msg.new_chat_member?.id, 'TGID');
+          //   // if (!byId) {
+          //   //   const response = await checkUser(msg.new_chat_member?.id);
+          //   // }
+          // }
           await bot.sendMessage(
             -1001955007812,
             `Пользователь ${
