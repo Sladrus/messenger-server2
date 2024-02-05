@@ -440,12 +440,12 @@ module.exports = (bot, io) => {
             }
           );
           if (msg.new_chat_member?.id) {
-            const byName = await getUser(
-              msg.new_chat_member?.username,
-              'TGNAME'
-            );
+            // const byName = await getUser(
+            //   msg.new_chat_member?.username,
+            //   'TGNAME'
+            // );
             const byId = await getUser(msg.new_chat_member?.id, 'TGID');
-            if (!byName && !byId) {
+            if (!byId) {
               const response = await checkUser(msg.new_chat_member?.id);
             }
           }
