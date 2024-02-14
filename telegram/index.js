@@ -317,7 +317,7 @@ async function telegramSendMessage(target, message) {
 }
 
 async function initClient(io) {
-  // return
+  // return;
   console.log('INIT');
   await client.start({
     phoneNumber: async () => await input.text('Please enter your number: '),
