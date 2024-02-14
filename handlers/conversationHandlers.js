@@ -1244,7 +1244,8 @@ module.exports = (io, socket) => {
         manager_id: 1,
         create_date: Date.now(),
       });
-      const message = await botSendMessage(-1001815632960, text, {
+      //-1001815632960
+      const message = await botSendMessage(-1002115256092, text, {
         parse_mode: 'HTML',
       });
       message.type = 'text';

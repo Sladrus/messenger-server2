@@ -205,17 +205,20 @@ const createMessage = async (event, io) => {
 
     //-1001955007812
     if (!conversation) {
-      await botSendMessage(
-        -1001955007812,
-        `Пользователь ${
-          sender?.firstName + (sender?.lastName ? ' ' + sender?.lastName : '')
-        } написал первое сообщение.\n\n<b>${
-          message?.message
-        }</b>\n\nUser ID: ${chat_id}\nUsername: ${
-          sender?.username ? '@' + sender?.username : 'Отсутствует'
-        }`,
-        { parse_mode: 'HTML' }
-      );
+      try {
+        await botSendMessage(
+          -1002115256092,
+          `Пользователь ${
+            sender?.firstName + (sender?.lastName ? ' ' + sender?.lastName : '')
+          } написал первое сообщение.\n\n<b>${
+            message?.message
+          }</b>\n\nUser ID: ${chat_id}\nUsername: ${
+            sender?.username ? '@' + sender?.username : 'Отсутствует'
+          }`,
+          { parse_mode: 'HTML' }
+        );
+      } catch (error) {}
+
       const newConversation = await ConversationModel.create({
         title:
           chat_id === user_id
