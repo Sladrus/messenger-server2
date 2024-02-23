@@ -1262,9 +1262,9 @@ module.exports = (io, socket) => {
               getCounterAgentStatus(data?.counteragent?.status)?.label
             })\n`
           : ''
-      }• Регулярность: ${data?.regularity}\n• Сроки: ${
-        data?.date
-      }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
+      }• Реквизиты: ${data?.requisites}\n• Регулярность: ${
+        data?.regularity
+      }\n• Сроки: ${data?.date}\n• Комментарий: ${data?.comment}\n\nУсловия: ${
         data?.conditions
       }</pre>\n\n———\nChat ID: ${conversation.chat_id}\nДата: ${formattedDate}`;
       const response = await createMoneysendApi({
@@ -1302,17 +1302,17 @@ module.exports = (io, socket) => {
           data?.volume
         }\n\n← Отдают: ${data?.give}\n→ Получают: ${data?.take}\n\n${
           data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ''
-        }${
+        }• Сроки: ${data?.date}\n${
           data?.counteragent?.name
             ? `• Контрагент: ${data?.counteragent?.name} (Статус: ${
                 getCounterAgentStatus(data?.counteragent?.status)?.label
               })\n`
             : ''
-        }• Регулярность: ${data?.regularity}\n• Сроки: ${
-          data?.date
-        }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
-          data?.conditions
-        }</pre>`,
+        }• Реквизиты: ${data?.requisites}\n• Регулярность: ${
+          data?.regularity
+        }\n• Сроки: ${data?.date}\n• Комментарий: ${
+          data?.comment
+        }\n\nУсловия: ${data?.conditions}</pre>`,
         {
           parse_mode: 'HTML',
         }
