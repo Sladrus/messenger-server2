@@ -1262,9 +1262,11 @@ module.exports = (io, socket) => {
               getCounterAgentStatus(data?.counteragent?.status)?.label
             })\n`
           : ''
-      }• Реквизиты: ${data?.requisites}\n• Регулярность: ${
-        data?.regularity
-      }\n• Сроки: ${data?.date}\n• Комментарий: ${data?.comment}\n\nУсловия: ${
+      }${
+        data?.requisites ? `• Реквизиты: ${data?.requisites}\n` : ''
+      }• Регулярность: ${data?.regularity}\n• Сроки: ${
+        data?.date
+      }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
         data?.conditions
       }</pre>\n\n———\nChat ID: ${conversation.chat_id}\nДата: ${formattedDate}`;
       const response = await createMoneysendApi({
@@ -1275,6 +1277,7 @@ module.exports = (io, socket) => {
         type: data?.type?.value,
         create_date: Date.now(),
       });
+      console.log(response);
       //-1001815632960
       const message = await botSendMessage(-1001815632960, text, {
         parse_mode: 'HTML',
