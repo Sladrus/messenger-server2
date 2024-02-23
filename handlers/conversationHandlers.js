@@ -1254,7 +1254,9 @@ module.exports = (io, socket) => {
         data?.link
       }\n\n<pre>Объем: ${data?.volume}\n\n← Отдают: ${
         data?.give
-      }\n→ Получают: ${data?.take}\n\n• Тип перевода: ${data?.type?.name}\n${
+      }\n→ Получают: ${data?.take}\n\n${
+        data?.type?.name && `• Тип перевода: ${data?.type?.name}\n`
+      }${
         data?.counteragent?.name &&
         `• Контрагент: ${data?.counteragent?.name} (Статус: ${
           getCounterAgentStatus(data?.counteragent?.status)?.label
