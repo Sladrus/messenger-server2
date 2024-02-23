@@ -14,8 +14,10 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
 
+const BASE_API_URL = process.env.BASE_API_URL;
+
 const baseApi = axios.create({
-  baseURL: 'http://20.67.242.227/bot',
+  baseURL: BASE_API_URL,
   headers: { 'x-api-key': `${token}` },
 });
 
@@ -1203,7 +1205,18 @@ module.exports = (io, socket) => {
     return tag;
   };
 
+  const getCounterAgentStatus = (status) => {
+    const statusList = [
+      { value: 'CHECK', label: 'На проверке' },
+      { value: 'RECHECK', label: 'Требует уточнения' },
+      { value: 'FAIL', label: 'На проверке' },
+      { value: 'ACTIVE', label: 'На проверке' },
+    ];
+    return statusList.find((item) => item.value === status);
+  };
+
   const createMoneysend = async ({ id, data }) => {
+    console.log(data);
     try {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
@@ -1237,15 +1250,30 @@ module.exports = (io, socket) => {
         year: 'numeric',
       };
       var formattedDate = date.toLocaleDateString('ru-RU', formatOptions);
-      const text = `${data.title} от ${data.user.username}\n\n→ ${data?.link}\n\n<pre>Объем: ${data?.volume}\n\n← Отдают: ${data?.give}\n→ Получают: ${data?.take}\n\n• Регулярность: ${data?.regularity}\n• Сроки: ${data?.date}\n• Комментарий: ${data?.comment}\n\nУсловия: ${data?.conditions}</pre>\n\n———\nChat ID: ${conversation.chat_id}\nДата: ${formattedDate}`;
+      const text = `${data.title} от ${data.user.username}\n\n→ ${
+        data?.link
+      }\n\n<pre>Объем: ${data?.volume}\n\n← Отдают: ${
+        data?.give
+      }\n→ Получают: ${data?.take}\n\n• Тип перевода: ${data?.type?.name}\n${
+        data?.counteragent &&
+        `• Контрагент: ${data?.counteragent?.name} (Статус: ${
+          getCounterAgentStatus(data?.counteragent?.status)?.label
+        })\n`
+      }• Регулярность: ${data?.regularity}\n• Сроки: ${
+        data?.date
+      }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
+        data?.conditions
+      }</pre>\n\n———\nChat ID: ${conversation.chat_id}\nДата: ${formattedDate}`;
       const response = await createMoneysendApi({
         chat_id: conversation.chat_id,
         task: text,
         manager_id: 1,
+        counteragent_id: data?.counteragent?.id,
+        type: data?.type?.value,
         create_date: Date.now(),
       });
       //-1001815632960
-      const message = await botSendMessage(-1002115256092, text, {
+      const message = await botSendMessage(-1001815632960, text, {
         parse_mode: 'HTML',
       });
       message.type = 'text';
@@ -1265,7 +1293,22 @@ module.exports = (io, socket) => {
       );
       const msg = await botSendMessage(
         conversation.chat_id,
-        `Отлично! Задача зарегестрированна под номером ${response?.id}, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${data?.volume}\n\n← Отдают: ${data?.give}\n→ Получают: ${data?.take}\n\n• Регулярность: ${data?.regularity}\n• Сроки: ${data?.date}\n• Комментарий: ${data?.comment}\n\nУсловия: ${data?.conditions}</pre>`,
+        `Отлично! Задача зарегестрированна под номером ${
+          response?.id
+        }, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${
+          data?.volume
+        }\n\n← Отдают: ${data?.give}\n→ Получают: ${
+          data?.take
+        }\n\n• Тип перевода: ${data?.type?.name}\n${
+          data?.counteragent &&
+          `• Контрагент: ${data?.counteragent?.name} (Статус: ${
+            getCounterAgentStatus(data?.counteragent?.status)?.label
+          })\n`
+        }• Регулярность: ${data?.regularity}\n• Сроки: ${
+          data?.date
+        }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
+          data?.conditions
+        }</pre>`,
         {
           parse_mode: 'HTML',
         }

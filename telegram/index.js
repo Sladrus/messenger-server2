@@ -207,7 +207,7 @@ const createMessage = async (event, io) => {
     if (!conversation) {
       try {
         await botSendMessage(
-          -1002115256092,
+          -1001955007812,
           `Пользователь ${
             sender?.firstName + (sender?.lastName ? ' ' + sender?.lastName : '')
           } написал первое сообщение.\n\n<b>${
