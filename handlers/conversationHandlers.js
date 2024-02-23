@@ -1258,12 +1258,12 @@ module.exports = (io, socket) => {
         data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ''
       }${
         data?.counteragent?.name
-          ? `• Контрагент: ${data?.counteragent?.name} (Статус: ${
+          ? `• Отправитель: ${data?.counteragent?.name} (Статус: ${
               getCounterAgentStatus(data?.counteragent?.status)?.label
             })\n`
           : ''
       }${
-        data?.requisites ? `• Реквизиты: ${data?.requisites}\n` : ''
+        data?.requisites ? `• Реквизиты получателя: ${data?.requisites}\n` : ''
       }• Регулярность: ${data?.regularity}\n• Сроки: ${
         data?.date
       }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
@@ -1307,11 +1307,11 @@ module.exports = (io, socket) => {
           data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ''
         }• Сроки: ${data?.date}\n${
           data?.counteragent?.name
-            ? `• Контрагент: ${data?.counteragent?.name} (Статус: ${
+            ? `• Отправитель: ${data?.counteragent?.name} (Статус: ${
                 getCounterAgentStatus(data?.counteragent?.status)?.label
               })\n`
             : ''
-        }• Реквизиты: ${data?.requisites}\n• Регулярность: ${
+        }• Реквизиты получателя: ${data?.requisites}\n• Регулярность: ${
           data?.regularity
         }\n• Сроки: ${data?.date}\n• Комментарий: ${
           data?.comment
