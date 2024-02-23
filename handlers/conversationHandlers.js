@@ -14,10 +14,10 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
 
-const BASE_API_URL = process.env.BASE_API_URL;
+const BOT_API_URL = process.env.BOT_API_URL;
 
 const baseApi = axios.create({
-  baseURL: BASE_API_URL,
+  baseURL: BOT_API_URL,
   headers: { 'x-api-key': `${token}` },
 });
 
