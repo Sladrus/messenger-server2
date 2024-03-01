@@ -21,6 +21,33 @@ const baseApi = axios.create({
   headers: { 'x-api-key': `${token}` },
 });
 
+const screenApi = axios.create({
+  baseURL: 'http://client.1210059-cn07082.tw1.ru',
+});
+
+async function getUser(value, type) {
+  try {
+    const response = await screenApi.get(`/user/${value}/${type}`);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+}
+
+async function checkUser(value, type = 'TGID', priority = true) {
+  try {
+    const response = await screenApi.post(`/user?priority=${priority}`, {
+      value: value,
+      type,
+    });
+    return response?.data;
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+}
+
 async function createMoneysendApi(body) {
   try {
     const response = await baseApi.post(`/task/moneysend`, body);
@@ -1216,7 +1243,6 @@ module.exports = (io, socket) => {
   };
 
   const createMoneysend = async ({ id, data }) => {
-    console.log(data);
     try {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
@@ -1241,7 +1267,13 @@ module.exports = (io, socket) => {
           socket.emit('error', { message: e.message });
         }
       }
-
+      if (conversation?.members?.length > 0) {
+        for (const member of conversation?.members) {
+          const user = await getUser(member?.id, 'TGID');
+          if (user) continue;
+          await checkUser(member?.id, 'TGID', true);
+        }
+      }
       var timestamp = Date.now();
       var date = new Date(timestamp);
       var formatOptions = {

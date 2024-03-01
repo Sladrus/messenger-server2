@@ -23,10 +23,6 @@ const mpApi = axios.create({
   headers: { 'X-Api-Key': `${mpToken}` },
 });
 
-const screenApi = axios.create({
-  baseURL: 'http://client.1210059-cn07082.tw1.ru',
-});
-
 const linkApi = axios.create({
   baseURL: 'http://link.1210059-cn07082.tw1.ru',
 });
@@ -49,30 +45,9 @@ async function getChatInfo(chat_id) {
   }
 }
 
-async function getUser(value, type) {
-  try {
-    const response = await screenApi.get(`/user/${value}/${type}`);
-    return response.data;
-  } catch (error) {
-    return;
-  }
-}
-
 async function getLinkByUser(userId) {
   try {
     const response = await linkApi.get(`/link?userId=${userId}`);
-    return response?.data;
-  } catch (error) {
-    return;
-  }
-}
-
-async function checkUser(value, type = 'TGID') {
-  try {
-    const response = await screenApi.post(`/user`, {
-      value: value,
-      type,
-    });
     return response?.data;
   } catch (error) {
     return;
@@ -439,16 +414,6 @@ module.exports = (bot, io) => {
               },
             }
           );
-          // if (msg.new_chat_member?.id) {
-          //   // const byName = await getUser(
-          //   //   msg.new_chat_member?.username,
-          //   //   'TGNAME'
-          //   // );
-          //   // const byId = await getUser(msg.new_chat_member?.id, 'TGID');
-          //   // if (!byId) {
-          //   //   const response = await checkUser(msg.new_chat_member?.id);
-          //   // }
-          // }
           await bot.sendMessage(
             -1001955007812,
             `Пользователь ${
@@ -520,3 +485,7 @@ module.exports = (bot, io) => {
     }
   });
 };
+
+// module.exports = {
+//   checkUser,
+// };
