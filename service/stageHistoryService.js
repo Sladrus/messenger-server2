@@ -587,7 +587,7 @@ class StageHistoryService {
             return item['value'];
           });
           rows.push({
-            path: [...userRow.path, `${chat.chat_id}`],
+            path: [...userRow.path, `${chat.chat_id} (${chat.id})`],
             id: `${userRow.id}-${chat._id}`,
             chatTitle: chat.title,
             chatStatus: chat?.stage?.label,
