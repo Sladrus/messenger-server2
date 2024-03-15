@@ -537,8 +537,8 @@ class StageHistoryService {
     const rows = [];
     const columns = [
       {
-        field: "chatId",
-        headerName: "Чат ID",
+        field: "chatTitle",
+        headerName: "Чат",
         headerAlign: "center",
         align: "center",
         flex: 1,
@@ -587,9 +587,9 @@ class StageHistoryService {
             return item['value'];
           });
           rows.push({
-            path: [...userRow.path, `${chat.title} (${chat.chat_id})`],
+            path: [...userRow.path, `${chat.chat_id}`],
             id: `${userRow.id}-${chat._id}`,
-            chatId: chat.chat_id,
+            chatTitle: chat.title,
             chatStatus: chat?.stage?.label,
             chatTags: tagsNames.join(','),
             percent: "",
