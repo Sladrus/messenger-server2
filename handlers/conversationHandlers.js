@@ -1331,7 +1331,7 @@ module.exports = (io, socket) => {
       );
       const msg = await botSendMessage(
         conversation.chat_id,
-        `Отлично! Задача зарегестрированна под номером ${
+        `Отлично! Задача зарегистрирована под номером ${
           response?.id
         }, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${
           data?.volume

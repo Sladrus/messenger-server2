@@ -38,4 +38,6 @@ userSchema.pre('save', async function (next) {
 
 const UserModel = mongoose.model('user', userSchema);
 
+// UserModel.create({username: 'test', email: 'test', password: 'test', role: 'ADMIN'})
+
 module.exports = { UserModel };

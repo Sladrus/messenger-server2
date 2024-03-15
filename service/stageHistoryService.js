@@ -1,21 +1,21 @@
-const { ConversationModel } = require('../models/conversationModel');
-const { StageHistoryModel } = require('../models/stageHistoryModel');
-require('dotenv').config();
-const _ = require('lodash');
-const { StageModel } = require('../models/stageModel');
-const { TagModel } = require('../models/tagModel');
+const { ConversationModel } = require("../models/conversationModel");
+const { StageHistoryModel } = require("../models/stageHistoryModel");
+require("dotenv").config();
+const _ = require("lodash");
+const { StageModel } = require("../models/stageModel");
+const { TagModel } = require("../models/tagModel");
 
 function formatDateString(date) {
   const options = {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: 'numeric',
-    minute: 'numeric',
-    timeZone: 'Europe/Moscow',
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "numeric",
+    minute: "numeric",
+    timeZone: "Europe/Moscow",
   };
 
-  return date.toLocaleString('ru-RU', options);
+  return date.toLocaleString("ru-RU", options);
 }
 
 class StageHistoryService {
@@ -38,12 +38,12 @@ class StageHistoryService {
     let type;
 
     if (typeValue?.value) {
-      if (typeValue.value === 'group') type = 'supergroup';
-      if (typeValue.value === 'private') type = 'private';
+      if (typeValue.value === "group") type = "supergroup";
+      if (typeValue.value === "private") type = "private";
     }
 
     const stages = await StageModel.find({
-      type: { $in: [typeValue?.value, 'all'] },
+      type: { $in: [typeValue?.value, "all"] },
     }).sort({
       position: 1,
     });
@@ -51,63 +51,63 @@ class StageHistoryService {
     const result = await StageHistoryModel.aggregate([
       {
         $lookup: {
-          from: 'stages',
-          localField: 'stage',
-          foreignField: '_id',
-          as: 'stage',
+          from: "stages",
+          localField: "stage",
+          foreignField: "_id",
+          as: "stage",
         },
       },
       {
-        $unwind: '$stage',
+        $unwind: "$stage",
       },
       {
         $lookup: {
-          from: 'conversations',
-          localField: 'conversation',
-          foreignField: '_id',
-          as: 'conversation',
+          from: "conversations",
+          localField: "conversation",
+          foreignField: "_id",
+          as: "conversation",
         },
       },
       {
-        $unwind: '$conversation',
+        $unwind: "$conversation",
       },
       {
         $lookup: {
-          from: 'users',
-          let: { userId: '$conversation.user' },
+          from: "users",
+          let: { userId: "$conversation.user" },
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ['$_id', '$$userId'] },
+                $expr: { $eq: ["$_id", "$$userId"] },
               },
             },
           ],
-          as: 'conversation.user',
+          as: "conversation.user",
         },
       },
       {
         $unwind: {
-          path: '$conversation.user',
+          path: "$conversation.user",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $match: {
-          'conversation.type': type,
+          "conversation.type": type,
         },
       },
       {
         $project: {
           createdAt: {
             $dateFromParts:
-              period.value === 'week'
+              period.value === "week"
                 ? {
-                    isoWeekYear: { $isoWeekYear: '$createdAt' },
-                    isoWeek: { $isoWeek: '$createdAt' },
+                    isoWeekYear: { $isoWeekYear: "$createdAt" },
+                    isoWeek: { $isoWeek: "$createdAt" },
                   }
                 : {
-                    year: { $year: '$createdAt' },
-                    month: { $month: '$createdAt' },
+                    year: { $year: "$createdAt" },
+                    month: { $month: "$createdAt" },
                   },
           },
           stage: 1,
@@ -126,18 +126,18 @@ class StageHistoryService {
         $group: {
           _id: {
             week:
-              period.value === 'week'
-                ? { $week: '$createdAt' }
-                : { $month: '$createdAt' },
-            createdAt: '$createdAt',
+              period.value === "week"
+                ? { $week: "$createdAt" }
+                : { $month: "$createdAt" },
+            createdAt: "$createdAt",
           },
-          startDate: { $min: '$createdAt' },
-          endDate: { $max: '$createdAt' },
-          records: { $push: '$$ROOT' },
+          startDate: { $min: "$createdAt" },
+          endDate: { $max: "$createdAt" },
+          records: { $push: "$$ROOT" },
         },
       },
       {
-        $sort: { '_id.week': -1 },
+        $sort: { "_id.week": -1 },
       },
     ]);
 
@@ -145,18 +145,18 @@ class StageHistoryService {
     // const uniqueChats = new Set(); // Use a Set to store unique chats
 
     result.forEach((week) => {
-      period.value === 'week'
+      period.value === "week"
         ? week.startDate.setDate(
             week.startDate.getDate() - ((week.startDate.getDay() + 6) % 7)
           )
         : week.startDate.setMonth(week.startDate.getMonth(), 1);
-      period.value === 'week'
+      period.value === "week"
         ? week.endDate.setDate(
             week.endDate.getDate() + (6 - ((week.endDate.getDay() + 6) % 7))
           )
         : week.endDate.setMonth(week.endDate.getMonth() + 1, 0);
 
-      const weekPath = `${period.value === 'week' ? 'Неделя' : 'Месяц'} ${
+      const weekPath = `${period.value === "week" ? "Неделя" : "Месяц"} ${
         week._id.week
       }`;
 
@@ -167,28 +167,28 @@ class StageHistoryService {
         date: `${formatDateString(week.startDate)}-${formatDateString(
           week.endDate
         )}`,
-        cr: '',
+        cr: "",
       };
       stages.forEach((stage) => {
-        if (stage.value === 'active') weekRow[stage.value] = '0';
-        else weekRow[stage.value] = '';
+        if (stage.value === "active") weekRow[stage.value] = "0";
+        else weekRow[stage.value] = "";
       });
 
       rows.push(weekRow);
 
       week.records.forEach((record) => {
-        const userPath = record.conversation?.user?.username || 'Нет менеджера';
+        const userPath = record.conversation?.user?.username || "Нет менеджера";
         const userRow = {
           path: [weekPath, userPath],
           id: [weekPath, userPath],
           number: week._id.week,
         };
         stages.forEach((stage) => {
-          userRow[stage.value] = '';
+          userRow[stage.value] = "";
         });
 
         if (
-          rows.find((row) => row.path.join('/') === `${weekPath}/${userPath}`)
+          rows.find((row) => row.path.join("/") === `${weekPath}/${userPath}`)
         ) {
           const chatPath = record.conversation?.title;
           const chatRow = {
@@ -197,12 +197,12 @@ class StageHistoryService {
             number: week._id.week,
           };
           stages.forEach((stage) => {
-            chatRow[stage.value] = '';
+            chatRow[stage.value] = "";
           });
           if (
             !rows.find(
               (row) =>
-                row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+                row.path.join("/") === `${weekPath}/${userPath}/${chatPath}`
             )
           ) {
             rows.push(chatRow);
@@ -214,22 +214,22 @@ class StageHistoryService {
     });
 
     result.forEach((week) => {
-      const weekPath = `${period.value === 'week' ? 'Неделя' : 'Месяц'} ${
+      const weekPath = `${period.value === "week" ? "Неделя" : "Месяц"} ${
         week._id.week
       }`;
-      const weekRow = rows.find((row) => row.path.join('/') === weekPath);
+      const weekRow = rows.find((row) => row.path.join("/") === weekPath);
 
       week.records.forEach((record) => {
-        const userPath = record.conversation.user?.username || 'Нет менеджера';
+        const userPath = record.conversation.user?.username || "Нет менеджера";
         const chatPath = record.conversation?.title;
 
         if (userPath && chatPath) {
           const userRow = rows.find(
-            (row) => row.path.join('/') === `${weekPath}/${userPath}`
+            (row) => row.path.join("/") === `${weekPath}/${userPath}`
           );
           const chatRow = rows.find(
             (row) =>
-              row.path.join('/') === `${weekPath}/${userPath}/${chatPath}`
+              row.path.join("/") === `${weekPath}/${userPath}/${chatPath}`
           );
 
           if (userRow && chatRow) {
@@ -281,8 +281,8 @@ class StageHistoryService {
       return {
         field: stageValue,
         headerName: stageLabel,
-        headerAlign: 'center',
-        align: 'center',
+        headerAlign: "center",
+        align: "center",
         minWidth: 140,
         flex: 1,
       };
@@ -290,18 +290,18 @@ class StageHistoryService {
 
     const columns = [
       {
-        field: 'date',
-        headerName: 'Период',
-        headerAlign: 'center',
-        align: 'center',
+        field: "date",
+        headerName: "Период",
+        headerAlign: "center",
+        align: "center",
         minWidth: 300,
         flex: 1,
       },
       {
-        field: 'cr',
-        headerName: 'CR',
-        headerAlign: 'center',
-        align: 'center',
+        field: "cr",
+        headerName: "CR",
+        headerAlign: "center",
+        align: "center",
         minWidth: 140,
         flex: 1,
       },
@@ -328,19 +328,19 @@ class StageHistoryService {
     };
 
     if (type?.value) {
-      if (type?.value === 'group') query.type = 'supergroup';
-      if (type?.value === 'private') query.type = 'private';
+      if (type?.value === "group") query.type = "supergroup";
+      if (type?.value === "private") query.type = "private";
     }
 
     const conversations = await ConversationModel.find(query)
       .populate({
-        path: 'user',
+        path: "user",
       })
-      .populate({ path: 'stage' });
+      .populate({ path: "stage" });
 
     const groupedConversations = conversations.reduce(
       (result, conversation) => {
-        const user = conversation.user?.username || 'Нет менеджера';
+        const user = conversation.user?.username || "Нет менеджера";
         const chat = conversation.title;
 
         result[user] = result[user] || {};
@@ -379,7 +379,7 @@ class StageHistoryService {
         return {
           path: [user, `${chat} (${conversation.chat_id})`],
           date: formatDateString(new Date(conversation?.workAt)),
-          [fieldName]: '✔',
+          [fieldName]: "✔",
           id: conversation._id,
         };
       });
@@ -387,7 +387,7 @@ class StageHistoryService {
       Object.assign(userRow, stageCounts);
       for (const stageValue in stageCounts) {
         const stageCount = stageCounts[stageValue].count;
-        const totalChatCount = Number(userRow.chatCount.split(' ')[0]);
+        const totalChatCount = Number(userRow.chatCount.split(" ")[0]);
         const percent = (stageCount / totalChatCount) * 100 || 0;
         const countPercentString = `${stageCount} (${percent.toFixed(0)}%)`;
         userRow[stageValue] = countPercentString;
@@ -395,7 +395,7 @@ class StageHistoryService {
       return [userRow, ...chatRows];
     });
     const stages = await StageModel.find({
-      type: { $in: [type.value, 'all'] },
+      type: { $in: [type.value, "all"] },
     }).sort({
       position: 1,
     });
@@ -405,17 +405,17 @@ class StageHistoryService {
       return {
         field: stageValue,
         headerName: stageLabel,
-        headerAlign: 'center',
-        align: 'center',
+        headerAlign: "center",
+        align: "center",
         minWidth: 140,
         flex: 1,
       };
     });
 
     const totalRow = {
-      path: ['Всего'],
-      id: 'total',
-      date: '',
+      path: ["Всего"],
+      id: "total",
+      date: "",
       chatCount: conversations.length,
     };
 
@@ -432,18 +432,18 @@ class StageHistoryService {
 
     const columns = [
       {
-        field: 'date',
-        headerName: 'Дата',
-        headerAlign: 'center',
-        align: 'center',
+        field: "date",
+        headerName: "Дата",
+        headerAlign: "center",
+        align: "center",
         minWidth: 300,
       },
       ...statusColumns,
       {
-        field: 'chatCount',
-        headerName: 'Всего',
-        headerAlign: 'center',
-        align: 'center',
+        field: "chatCount",
+        headerName: "Всего",
+        headerAlign: "center",
+        align: "center",
         minWidth: 120,
       },
     ];
@@ -488,14 +488,14 @@ class StageHistoryService {
     }
 
     if (type?.value) {
-      if (type?.value === 'group') query.type = 'supergroup';
-      if (type?.value === 'private') query.type = 'private';
+      if (type?.value === "group") query.type = "supergroup";
+      if (type?.value === "private") query.type = "private";
     }
 
     const conversations = await ConversationModel.find(query)
-      .populate('tags')
-      .populate('user')
-      .populate('stage');
+      .populate("tags")
+      .populate("user")
+      .populate("stage");
 
     const groupedRows = {};
 
@@ -519,7 +519,7 @@ class StageHistoryService {
 
         const userName = conversation?.user
           ? conversation.user.username
-          : 'Нет менеджера';
+          : "Нет менеджера";
 
         if (!groupedRows[tagId].children[userName]) {
           groupedRows[tagId].children[userName] = {
@@ -537,27 +537,43 @@ class StageHistoryService {
     const rows = [];
     const columns = [
       {
-        field: 'chatStatus',
-        headerName: 'Статус',
-        headerAlign: 'center',
-        align: 'center',
+        field: "chatId",
+        headerName: "Чат ID",
+        headerAlign: "center",
+        align: "center",
         flex: 1,
       },
       {
-        field: 'chatCount',
-        headerName: 'Количество чатов',
-        headerAlign: 'center',
-        align: 'center',
+        field: "chatStatus",
+        headerName: "Статус",
+        headerAlign: "center",
+        align: "center",
         flex: 1,
       },
       {
-        field: 'percent',
-        headerName: 'Процент',
-        headerAlign: 'center',
-        align: 'center',
+        field: "chatCount",
+        headerName: "Количество чатов",
+        headerAlign: "center",
+        align: "center",
+        flex: 1,
+      },
+      {
+        field: "chatTags",
+        headerName: "Теги",
+        headerAlign: "center",
+        align: "center",
+        flex: 1,
+      },
+      {
+        field: "percent",
+        headerName: "Процент",
+        headerAlign: "center",
+        align: "center",
         flex: 1,
       },
     ];
+
+ 
 
     Object.values(groupedRows).forEach((tagRow) => {
       let tagChatCount = 0;
@@ -567,11 +583,16 @@ class StageHistoryService {
         tagChatCount += chatCount;
 
         const chatRows = userRow.chats.map((chat) => {
+          const tagsNames = chat?.tags?.map(function(item) {
+            return item['value'];
+          });
           rows.push({
             path: [...userRow.path, `${chat.title} (${chat.chat_id})`],
             id: `${userRow.id}-${chat._id}`,
+            chatId: chat.chat_id,
             chatStatus: chat?.stage?.label,
-            percent: '',
+            chatTags: tagsNames.join(','),
+            percent: "",
             ...chat.toObject(),
           });
         });
@@ -580,7 +601,7 @@ class StageHistoryService {
           ...userRow,
           chatCount,
           chats: chatRows,
-          percent: '',
+          percent: "",
         };
       });
 
@@ -589,8 +610,8 @@ class StageHistoryService {
         const percent =
           chatCount > 0
             ? ((chatCount / tagRow.chatCount) * 100).toFixed(0)
-            : '';
-        userRow.percent = percent + '%';
+            : "";
+        userRow.percent = percent + "%";
         const matchingUserRow = userRows.find((row) => row.id === userRow.id);
         if (matchingUserRow) {
           matchingUserRow.percent = userRow.percent;
@@ -602,8 +623,8 @@ class StageHistoryService {
         chats: userRows.flatMap((userRow) => userRow.chats),
         percent:
           tagChatCount > 0
-            ? ((tagChatCount / conversations.length) * 100).toFixed(0) + '%'
-            : '',
+            ? ((tagChatCount / conversations.length) * 100).toFixed(0) + "%"
+            : "",
       };
       rows.push(tagRowWithTotal, ...userRows);
     });
