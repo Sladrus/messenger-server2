@@ -1,15 +1,15 @@
-const { default: mongoose } = require('mongoose');
-const { ConversationModel } = require('../models/conversationModel');
-const { MessageModel } = require('../models/messageModel');
-const { TagModel } = require('../models/tagModel');
-const { TaskTypeModel } = require('../models/taskTypeModel');
-const { bot, botSendMessage, exportLink } = require('../bot');
-const { default: axios } = require('axios');
-const { StageModel } = require('../models/stageModel');
-const { telegramSendMessage } = require('../telegram');
-const { TaskModel } = require('../models/taskModel');
-const stageHistoryService = require('../service/stageHistoryService');
-const { ReadHistoryModel } = require('../models/readHistoryModel');
+const { default: mongoose } = require("mongoose");
+const { ConversationModel } = require("../models/conversationModel");
+const { MessageModel } = require("../models/messageModel");
+const { TagModel } = require("../models/tagModel");
+const { TaskTypeModel } = require("../models/taskTypeModel");
+const { bot, botSendMessage, exportLink } = require("../bot");
+const { default: axios } = require("axios");
+const { StageModel } = require("../models/stageModel");
+const { telegramSendMessage } = require("../telegram");
+const { TaskModel } = require("../models/taskModel");
+const stageHistoryService = require("../service/stageHistoryService");
+const { ReadHistoryModel } = require("../models/readHistoryModel");
 const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
@@ -18,11 +18,11 @@ const BOT_API_URL = process.env.BOT_API_URL;
 
 const baseApi = axios.create({
   baseURL: BOT_API_URL,
-  headers: { 'x-api-key': `${token}` },
+  headers: { "x-api-key": `${token}` },
 });
 
 const screenApi = axios.create({
-  baseURL: 'http://client.1210059-cn07082.tw1.ru',
+  baseURL: "http://client.1210059-cn07082.tw1.ru",
 });
 
 async function getUser(value, type) {
@@ -35,7 +35,7 @@ async function getUser(value, type) {
   }
 }
 
-async function checkUser(value, type = 'TGID', priority = true) {
+async function checkUser(value, type = "TGID", priority = true) {
   try {
     const response = await screenApi.post(`/user?priority=${priority}`, {
       value: value,
@@ -71,180 +71,180 @@ module.exports = (io, socket) => {
     const pipeline = [
       {
         $group: {
-          _id: { chat_id: '$chat_id', createdAt: '$createdAt' },
-          updatedAt: { $max: '$updatedAt' },
-          conversation: { $first: '$$ROOT' },
+          _id: { chat_id: "$chat_id", createdAt: "$createdAt" },
+          updatedAt: { $max: "$updatedAt" },
+          conversation: { $first: "$$ROOT" },
         },
       },
       {
         $project: {
-          _id: '$conversation._id',
-          title: '$conversation.title',
-          chat_id: '$conversation.chat_id',
-          type: '$conversation.type',
-          unreadCount: '$conversation.unreadCount',
-          createdAt: '$conversation.createdAt',
-          updatedAt: '$conversation.updatedAt',
-          members: '$conversation.members',
-          workAt: '$conversation.workAt',
-          lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
-          stage: '$conversation.stage',
-          user: '$conversation.user',
-          grade: '$conversation.grade',
-          tags: '$conversation.tags',
-          tasks: '$conversation.tasks',
+          _id: "$conversation._id",
+          title: "$conversation.title",
+          chat_id: "$conversation.chat_id",
+          type: "$conversation.type",
+          unreadCount: "$conversation.unreadCount",
+          createdAt: "$conversation.createdAt",
+          updatedAt: "$conversation.updatedAt",
+          members: "$conversation.members",
+          workAt: "$conversation.workAt",
+          lastMessageId: { $arrayElemAt: ["$conversation.messages", -1] },
+          stage: "$conversation.stage",
+          user: "$conversation.user",
+          grade: "$conversation.grade",
+          tags: "$conversation.tags",
+          tasks: "$conversation.tasks",
         },
       },
       {
         $lookup: {
-          from: 'messages',
-          localField: 'lastMessageId',
-          foreignField: '_id',
-          as: 'lastMessage',
+          from: "messages",
+          localField: "lastMessageId",
+          foreignField: "_id",
+          as: "lastMessage",
         },
       },
       {
         $lookup: {
-          from: 'stages',
-          localField: 'stage',
-          foreignField: '_id',
-          as: 'stage',
+          from: "stages",
+          localField: "stage",
+          foreignField: "_id",
+          as: "stage",
         },
       },
       {
-        $unwind: '$stage',
+        $unwind: "$stage",
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'user',
-          foreignField: '_id',
-          as: 'user',
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
         },
       },
       {
         $unwind: {
-          path: '$user',
+          path: "$user",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $lookup: {
-          from: 'tags',
-          localField: 'tags',
-          foreignField: '_id',
-          as: 'tags',
+          from: "tags",
+          localField: "tags",
+          foreignField: "_id",
+          as: "tags",
         },
       },
       {
         $unwind: {
-          path: '$tags',
+          path: "$tags",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $lookup: {
-          from: 'tasks',
-          localField: 'tasks',
-          foreignField: '_id',
-          as: 'tasks',
+          from: "tasks",
+          localField: "tasks",
+          foreignField: "_id",
+          as: "tasks",
         },
       },
       {
         $unwind: {
-          path: '$tasks',
+          path: "$tasks",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $lookup: {
-          from: 'tasks',
-          localField: 'lastMessage.task',
-          foreignField: '_id',
-          as: 'messageTask',
+          from: "tasks",
+          localField: "lastMessage.task",
+          foreignField: "_id",
+          as: "messageTask",
         },
       },
       {
         $unwind: {
-          path: '$messageTask',
+          path: "$messageTask",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $lookup: {
-          from: 'task_types',
-          localField: 'messageTask.type',
-          foreignField: '_id',
-          as: 'messageTask.type',
+          from: "task_types",
+          localField: "messageTask.type",
+          foreignField: "_id",
+          as: "messageTask.type",
         },
       },
       {
         $unwind: {
-          path: '$messageTask.type',
+          path: "$messageTask.type",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $lookup: {
-          from: 'task_types',
-          localField: 'tasks.type',
-          foreignField: '_id',
-          as: 'tasks.type',
+          from: "task_types",
+          localField: "tasks.type",
+          foreignField: "_id",
+          as: "tasks.type",
         },
       },
       {
         $unwind: {
-          path: '$tasks.type',
+          path: "$tasks.type",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $group: {
-          _id: '$_id',
+          _id: "$_id",
           title: {
-            $first: '$title',
+            $first: "$title",
           },
           chat_id: {
-            $first: '$chat_id',
+            $first: "$chat_id",
           },
           type: {
-            $first: '$type',
+            $first: "$type",
           },
           unreadCount: {
-            $first: '$unreadCount',
+            $first: "$unreadCount",
           },
           createdAt: {
-            $first: '$createdAt',
+            $first: "$createdAt",
           },
           updatedAt: {
-            $first: '$updatedAt',
+            $first: "$updatedAt",
           },
           members: {
-            $first: '$members',
+            $first: "$members",
           },
           workAt: {
-            $first: '$workAt',
+            $first: "$workAt",
           },
           lastMessage: {
-            $first: '$lastMessage',
+            $first: "$lastMessage",
           },
           stage: {
-            $first: '$stage',
+            $first: "$stage",
           },
           user: {
-            $first: '$user',
+            $first: "$user",
           },
           grade: {
-            $first: '$grade',
+            $first: "$grade",
           },
           tags: {
-            $addToSet: '$tags',
+            $addToSet: "$tags",
           },
           tasks: {
-            $addToSet: '$tasks',
+            $addToSet: "$tasks",
           },
           messageTask: {
-            $first: '$messageTask',
+            $first: "$messageTask",
           },
         },
       },
@@ -284,15 +284,15 @@ module.exports = (io, socket) => {
           workAt: 1,
           lastMessage: {
             $mergeObjects: [
-              { $arrayElemAt: ['$lastMessage', 0] }, // Extract the first element
-              { task: '$messageTask' }, // Nest the task field inside lastMessage
+              { $arrayElemAt: ["$lastMessage", 0] }, // Extract the first element
+              { task: "$messageTask" }, // Nest the task field inside lastMessage
             ],
           },
           stage: {
-            _id: '$stage._id',
-            value: '$stage.value',
-            label: '$stage.label',
-            color: '$stage.color',
+            _id: "$stage._id",
+            value: "$stage.value",
+            label: "$stage.label",
+            color: "$stage.color",
           },
           user: 1,
           grade: 1,
@@ -302,122 +302,123 @@ module.exports = (io, socket) => {
       },
     ];
     const conversations = await ConversationModel.aggregate(pipeline);
-    return io.emit('conversation:update', { conversation: conversations[0] });
+    return io.emit("conversation:update", { conversation: conversations[0] });
   };
 
-  const getConversations = async ({ filter }) => {
+  const getConversations = async ({ filter, page, limit}) => {
     try {
       const pipeline = [
         {
           $group: {
-            _id: { chat_id: '$chat_id', createdAt: '$createdAt' },
-            updatedAt: { $max: '$updatedAt' },
-            conversation: { $first: '$$ROOT' },
+            _id: { chat_id: "$chat_id", createdAt: "$createdAt" },
+            updatedAt: { $max: "$updatedAt" },
+            conversation: { $first: "$$ROOT" },
           },
         },
         {
           $project: {
-            _id: '$conversation._id',
-            title: '$conversation.title',
-            chat_id: '$conversation.chat_id',
-            type: '$conversation.type',
-            unreadCount: '$conversation.unreadCount',
-            createdAt: '$conversation.createdAt',
-            updatedAt: '$conversation.updatedAt',
-            workAt: '$conversation.workAt',
-            lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
-            stage: '$conversation.stage',
-            user: '$conversation.user',
-            tags: '$conversation.tags',
+            _id: "$conversation._id",
+            title: "$conversation.title",
+            chat_id: "$conversation.chat_id",
+            type: "$conversation.type",
+            unreadCount: "$conversation.unreadCount",
+            createdAt: "$conversation.createdAt",
+            updatedAt: "$conversation.updatedAt",
+            workAt: "$conversation.workAt",
+            lastMessageId: { $arrayElemAt: ["$conversation.messages", -1] },
+            stage: "$conversation.stage",
+            user: "$conversation.user",
+            tags: "$conversation.tags",
           },
         },
         {
           $lookup: {
-            from: 'messages',
-            localField: 'lastMessageId',
-            foreignField: '_id',
-            as: 'lastMessage',
+            from: "messages",
+            localField: "lastMessageId",
+            foreignField: "_id",
+            as: "lastMessage",
           },
         },
         {
           $lookup: {
-            from: 'stages',
-            localField: 'stage',
-            foreignField: '_id',
-            as: 'stage',
+            from: "stages",
+            localField: "stage",
+            foreignField: "_id",
+            as: "stage",
           },
         },
         {
-          $unwind: '$stage',
+          $unwind: "$stage",
         },
         {
           $lookup: {
-            from: 'users',
-            localField: 'user',
-            foreignField: '_id',
-            as: 'user',
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
           },
         },
         {
           $unwind: {
-            path: '$user',
+            path: "$user",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'tags',
-            localField: 'tags',
-            foreignField: '_id',
-            as: 'tags',
+            from: "tags",
+            localField: "tags",
+            foreignField: "_id",
+            as: "tags",
           },
         },
         {
           $unwind: {
-            path: '$tags',
+            path: "$tags",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $group: {
-            _id: '$_id',
+            _id: "$_id",
             title: {
-              $first: '$title',
+              $first: "$title",
             },
             chat_id: {
-              $first: '$chat_id',
+              $first: "$chat_id",
             },
             type: {
-              $first: '$type',
+              $first: "$type",
             },
             unreadCount: {
-              $first: '$unreadCount',
+              $first: "$unreadCount",
             },
             createdAt: {
-              $first: '$createdAt',
+              $first: "$createdAt",
             },
             updatedAt: {
-              $first: '$updatedAt',
+              $first: "$updatedAt",
             },
             workAt: {
-              $first: '$workAt',
+              $first: "$workAt",
             },
             lastMessage: {
-              $first: '$lastMessage',
+              $first: "$lastMessage",
             },
             stage: {
-              $first: '$stage',
+              $first: "$stage",
             },
             user: {
-              $first: '$user',
+              $first: "$user",
             },
             tags: {
-              $addToSet: '$tags',
+              $addToSet: "$tags",
             },
           },
         },
 
         { $sort: { updatedAt: -1 } },
+
         {
           $project: {
             _id: 1,
@@ -428,27 +429,36 @@ module.exports = (io, socket) => {
             createdAt: 1,
             updatedAt: 1,
             workAt: 1,
-            lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+            lastMessage: { $arrayElemAt: ["$lastMessage", 0] },
             stage: {
-              _id: '$stage._id',
-              value: '$stage.value',
-              label: '$stage.label',
-              color: '$stage.color',
+              _id: "$stage._id",
+              value: "$stage.value",
+              label: "$stage.label",
+              color: "$stage.color",
             },
             user: 1,
             tags: 1,
           },
         },
+        {
+          $facet: {
+            metadata: [{ $count: "total" }, { $addFields: { page: page } }],
+            data: [
+              // { $skip: (page - 1) * limit },
+              { $limit: limit * page },
+            ], 
+          },
+        },
       ];
 
-      if (filter?.user && filter.user !== 'all' && filter.user !== 'nobody') {
+      if (filter?.user && filter.user !== "all" && filter.user !== "nobody") {
         const userId = new ObjectId(filter.user);
         pipeline.unshift({ $match: { user: userId } });
       }
-      if (filter?.user === 'nobody') {
+      if (filter?.user === "nobody") {
         pipeline.unshift({ $match: { user: null } });
       }
-      if (filter?.stage && filter.stage !== 'all') {
+      if (filter?.stage && filter.stage !== "all") {
         const stageId = new ObjectId(filter.stage);
         pipeline.unshift({ $match: { stage: stageId } });
       }
@@ -462,12 +472,12 @@ module.exports = (io, socket) => {
         const tagIds = filter.tags.map((tag) => new ObjectId(tag._id));
         pipeline.unshift({ $match: { tags: { $in: tagIds } } });
       }
-      if (filter?.type && filter.type !== 'all') {
-        if (filter?.type === 'private')
-          pipeline.unshift({ $match: { type: 'private' } });
+      if (filter?.type && filter.type !== "all") {
+        if (filter?.type === "private")
+          pipeline.unshift({ $match: { type: "private" } });
         else
           pipeline.unshift({
-            $match: { type: { $in: ['group', 'supergroup'] } },
+            $match: { type: { $in: ["group", "supergroup"] } },
           });
       }
       if (filter.dateRange) {
@@ -485,12 +495,12 @@ module.exports = (io, socket) => {
           },
         });
       }
-      const conversations = await ConversationModel.aggregate(pipeline);
-
-      return socket.emit('conversations:set', { conversations });
+      const data = await ConversationModel.aggregate(pipeline);
+      // console.log(data[0].metadata);
+      return socket.emit("conversations:set", { conversations: data[0] });
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -499,114 +509,114 @@ module.exports = (io, socket) => {
       const pipeline = [
         {
           $group: {
-            _id: { chat_id: '$chat_id', createdAt: '$createdAt' },
-            updatedAt: { $max: '$updatedAt' },
-            conversation: { $first: '$$ROOT' },
+            _id: { chat_id: "$chat_id", createdAt: "$createdAt" },
+            updatedAt: { $max: "$updatedAt" },
+            conversation: { $first: "$$ROOT" },
           },
         },
         {
           $project: {
-            _id: '$conversation._id',
-            title: '$conversation.title',
-            chat_id: '$conversation.chat_id',
-            type: '$conversation.type',
-            unreadCount: '$conversation.unreadCount',
-            createdAt: '$conversation.createdAt',
-            updatedAt: '$conversation.updatedAt',
-            workAt: '$conversation.workAt',
-            lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
-            stage: '$conversation.stage',
-            user: '$conversation.user',
-            grade: '$conversation.grade',
+            _id: "$conversation._id",
+            title: "$conversation.title",
+            chat_id: "$conversation.chat_id",
+            type: "$conversation.type",
+            unreadCount: "$conversation.unreadCount",
+            createdAt: "$conversation.createdAt",
+            updatedAt: "$conversation.updatedAt",
+            workAt: "$conversation.workAt",
+            lastMessageId: { $arrayElemAt: ["$conversation.messages", -1] },
+            stage: "$conversation.stage",
+            user: "$conversation.user",
+            grade: "$conversation.grade",
 
-            tags: '$conversation.tags',
+            tags: "$conversation.tags",
           },
         },
         {
           $lookup: {
-            from: 'messages',
-            localField: 'lastMessageId',
-            foreignField: '_id',
-            as: 'lastMessage',
+            from: "messages",
+            localField: "lastMessageId",
+            foreignField: "_id",
+            as: "lastMessage",
           },
         },
         {
           $lookup: {
-            from: 'stages',
-            localField: 'stage',
-            foreignField: '_id',
-            as: 'stage',
+            from: "stages",
+            localField: "stage",
+            foreignField: "_id",
+            as: "stage",
           },
         },
         {
-          $unwind: '$stage',
+          $unwind: "$stage",
         },
         {
           $lookup: {
-            from: 'users',
-            localField: 'user',
-            foreignField: '_id',
-            as: 'user',
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
           },
         },
         {
           $unwind: {
-            path: '$user',
+            path: "$user",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'tags',
-            localField: 'tags',
-            foreignField: '_id',
-            as: 'tags',
+            from: "tags",
+            localField: "tags",
+            foreignField: "_id",
+            as: "tags",
           },
         },
         {
           $unwind: {
-            path: '$tags',
+            path: "$tags",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $group: {
-            _id: '$_id',
+            _id: "$_id",
             title: {
-              $first: '$title',
+              $first: "$title",
             },
             chat_id: {
-              $first: '$chat_id',
+              $first: "$chat_id",
             },
             type: {
-              $first: '$type',
+              $first: "$type",
             },
             unreadCount: {
-              $first: '$unreadCount',
+              $first: "$unreadCount",
             },
             createdAt: {
-              $first: '$createdAt',
+              $first: "$createdAt",
             },
             updatedAt: {
-              $first: '$updatedAt',
+              $first: "$updatedAt",
             },
             workAt: {
-              $first: '$workAt',
+              $first: "$workAt",
             },
             lastMessage: {
-              $first: '$lastMessage',
+              $first: "$lastMessage",
             },
             stage: {
-              $first: '$stage',
+              $first: "$stage",
             },
             user: {
-              $first: '$user',
+              $first: "$user",
             },
             grade: {
-              $first: '$grade',
+              $first: "$grade",
             },
             tags: {
-              $addToSet: '$tags',
+              $addToSet: "$tags",
             },
           },
         },
@@ -614,7 +624,7 @@ module.exports = (io, socket) => {
           $match: {
             title: {
               $regex: searchInput,
-              $options: 'i',
+              $options: "i",
             },
           },
         },
@@ -644,12 +654,12 @@ module.exports = (io, socket) => {
             createdAt: 1,
             updatedAt: 1,
             workAt: 1,
-            lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+            lastMessage: { $arrayElemAt: ["$lastMessage", 0] },
             stage: {
-              _id: '$stage._id',
-              value: '$stage.value',
-              label: '$stage.label',
-              color: '$stage.color',
+              _id: "$stage._id",
+              value: "$stage.value",
+              label: "$stage.label",
+              color: "$stage.color",
             },
             user: 1,
             grade: 1,
@@ -659,20 +669,20 @@ module.exports = (io, socket) => {
       ];
       const conversations = await ConversationModel.aggregate(pipeline);
 
-      return socket.emit('conversations:setSearch', { conversations });
+      return socket.emit("conversations:setSearch", { conversations });
     } catch (e) {
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
   const getOneTask = async ({ id }) => {
     try {
       const task = await TaskModel.findOne({ _id: id })
-        .populate('conversation')
-        .populate('type');
-      io.emit('task:update', { task });
+        .populate("conversation")
+        .populate("type");
+      io.emit("task:update", { task });
     } catch (e) {
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -682,23 +692,23 @@ module.exports = (io, socket) => {
         chat_id: selectedChatId,
       })
         .populate({
-          path: 'messages',
-          populate: { path: 'task', populate: { path: 'type' } },
+          path: "messages",
+          populate: { path: "task", populate: { path: "type" } },
         })
         .populate({
-          path: 'user',
+          path: "user",
         })
-        .populate({ path: 'stage', select: '-conversations' })
-        .populate({ path: 'tags', select: '-conversations' })
+        .populate({ path: "stage", select: "-conversations" })
+        .populate({ path: "tags", select: "-conversations" })
         .populate({
-          path: 'tasks',
-          select: '-conversation',
-          populate: { path: 'type' },
+          path: "tasks",
+          select: "-conversation",
+          populate: { path: "type" },
         });
 
-      return socket.emit('conversations:setOne', { conversation });
+      return socket.emit("conversations:setOne", { conversation });
     } catch (e) {
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -719,7 +729,7 @@ module.exports = (io, socket) => {
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -733,10 +743,10 @@ module.exports = (io, socket) => {
       );
       const stages = await StageModel.find().sort({ position: 1 });
 
-      return io.emit('stages:set', { stages });
+      return io.emit("stages:set", { stages });
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -745,17 +755,17 @@ module.exports = (io, socket) => {
       const conversationsWithStage = await ConversationModel.find({ stage });
 
       if (conversationsWithStage.length > 0) {
-        throw new Error('Нельзя удалить, так как есть чаты с этим статусом.');
+        throw new Error("Нельзя удалить, так как есть чаты с этим статусом.");
       }
       await StageModel.deleteOne({
         _id: new ObjectId(id),
       });
       const stages = await StageModel.find().sort({ position: 1 });
 
-      return io.emit('stages:set', { stages });
+      return io.emit("stages:set", { stages });
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -764,13 +774,13 @@ module.exports = (io, socket) => {
       const totalRecords = await StageModel.count();
 
       if (position < 0 || position >= totalRecords) {
-        throw new Error('Неверная позиция');
+        throw new Error("Неверная позиция");
       }
       const recordToMove = await StageModel.findOne({
         _id: new ObjectId(id),
       });
       if (!recordToMove) {
-        throw new Error('Такой записи не существует');
+        throw new Error("Такой записи не существует");
       }
       const currentPosition = recordToMove.position;
       await StageModel.updateOne(
@@ -782,10 +792,10 @@ module.exports = (io, socket) => {
 
       const stages = await StageModel.find().sort({ position: 1 });
 
-      return io.emit('stages:set', { stages });
+      return io.emit("stages:set", { stages });
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -807,7 +817,7 @@ module.exports = (io, socket) => {
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -830,7 +840,7 @@ module.exports = (io, socket) => {
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
     await getOneConversation({ id });
   };
@@ -846,11 +856,11 @@ module.exports = (io, socket) => {
       await findOneConversation(id);
 
       const tags = await TagModel.find();
-      return io.emit('tags:set', { tags });
+      return io.emit("tags:set", { tags });
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -860,17 +870,17 @@ module.exports = (io, socket) => {
       const conversations = await ConversationModel.find({ tags: tag });
       if (conversations.length > 0) {
         throw new Error(
-          'Есть чаты с таким тегом. Сначала уберите тег с чата, чтобы удалить тег.'
+          "Есть чаты с таким тегом. Сначала уберите тег с чата, чтобы удалить тег."
         );
       }
       await TagModel.deleteOne({ _id: id });
 
       const tags = await TagModel.find();
-      return io.emit('tags:set', { tags });
+      return io.emit("tags:set", { tags });
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -896,7 +906,7 @@ module.exports = (io, socket) => {
         { $push: { tasks: task._id }, $set: { updatedAt: new Date() } }
       );
       const message = {
-        type: 'task',
+        type: "task",
         task: task,
         from: { is_bot: true },
         unread: false,
@@ -920,176 +930,176 @@ module.exports = (io, socket) => {
       const pipeline = [
         {
           $group: {
-            _id: { chat_id: '$chat_id', createdAt: '$createdAt' },
-            updatedAt: { $max: '$updatedAt' },
-            conversation: { $first: '$$ROOT' },
+            _id: { chat_id: "$chat_id", createdAt: "$createdAt" },
+            updatedAt: { $max: "$updatedAt" },
+            conversation: { $first: "$$ROOT" },
           },
         },
         {
           $project: {
-            _id: '$conversation._id',
-            title: '$conversation.title',
-            chat_id: '$conversation.chat_id',
-            type: '$conversation.type',
-            unreadCount: '$conversation.unreadCount',
-            createdAt: '$conversation.createdAt',
-            updatedAt: '$conversation.updatedAt',
-            workAt: '$conversation.workAt',
-            lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
-            stage: '$conversation.stage',
-            user: '$conversation.user',
-            grade: '$conversation.grade',
-            tags: '$conversation.tags',
-            tasks: '$conversation.tasks',
+            _id: "$conversation._id",
+            title: "$conversation.title",
+            chat_id: "$conversation.chat_id",
+            type: "$conversation.type",
+            unreadCount: "$conversation.unreadCount",
+            createdAt: "$conversation.createdAt",
+            updatedAt: "$conversation.updatedAt",
+            workAt: "$conversation.workAt",
+            lastMessageId: { $arrayElemAt: ["$conversation.messages", -1] },
+            stage: "$conversation.stage",
+            user: "$conversation.user",
+            grade: "$conversation.grade",
+            tags: "$conversation.tags",
+            tasks: "$conversation.tasks",
           },
         },
         {
           $lookup: {
-            from: 'messages',
-            localField: 'lastMessageId',
-            foreignField: '_id',
-            as: 'lastMessage',
+            from: "messages",
+            localField: "lastMessageId",
+            foreignField: "_id",
+            as: "lastMessage",
           },
         },
         {
           $lookup: {
-            from: 'stages',
-            localField: 'stage',
-            foreignField: '_id',
-            as: 'stage',
+            from: "stages",
+            localField: "stage",
+            foreignField: "_id",
+            as: "stage",
           },
         },
         {
-          $unwind: '$stage',
+          $unwind: "$stage",
         },
         {
           $lookup: {
-            from: 'users',
-            localField: 'user',
-            foreignField: '_id',
-            as: 'user',
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
           },
         },
         {
           $unwind: {
-            path: '$user',
+            path: "$user",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'tags',
-            localField: 'tags',
-            foreignField: '_id',
-            as: 'tags',
+            from: "tags",
+            localField: "tags",
+            foreignField: "_id",
+            as: "tags",
           },
         },
         {
           $unwind: {
-            path: '$tags',
+            path: "$tags",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'tasks',
-            localField: 'tasks',
-            foreignField: '_id',
-            as: 'tasks',
+            from: "tasks",
+            localField: "tasks",
+            foreignField: "_id",
+            as: "tasks",
           },
         },
         {
           $unwind: {
-            path: '$tasks',
+            path: "$tasks",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'tasks',
-            localField: 'lastMessage.task',
-            foreignField: '_id',
-            as: 'messageTask',
+            from: "tasks",
+            localField: "lastMessage.task",
+            foreignField: "_id",
+            as: "messageTask",
           },
         },
         {
           $unwind: {
-            path: '$messageTask',
+            path: "$messageTask",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'task_types',
-            localField: 'messageTask.type',
-            foreignField: '_id',
-            as: 'messageTask.type',
+            from: "task_types",
+            localField: "messageTask.type",
+            foreignField: "_id",
+            as: "messageTask.type",
           },
         },
         {
           $unwind: {
-            path: '$messageTask.type',
+            path: "$messageTask.type",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $lookup: {
-            from: 'task_types',
-            localField: 'tasks.type',
-            foreignField: '_id',
-            as: 'tasks.type',
+            from: "task_types",
+            localField: "tasks.type",
+            foreignField: "_id",
+            as: "tasks.type",
           },
         },
         {
           $unwind: {
-            path: '$tasks.type',
+            path: "$tasks.type",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
           $group: {
-            _id: '$_id',
+            _id: "$_id",
             title: {
-              $first: '$title',
+              $first: "$title",
             },
             chat_id: {
-              $first: '$chat_id',
+              $first: "$chat_id",
             },
             type: {
-              $first: '$type',
+              $first: "$type",
             },
             unreadCount: {
-              $first: '$unreadCount',
+              $first: "$unreadCount",
             },
             createdAt: {
-              $first: '$createdAt',
+              $first: "$createdAt",
             },
             updatedAt: {
-              $first: '$updatedAt',
+              $first: "$updatedAt",
             },
             workAt: {
-              $first: '$workAt',
+              $first: "$workAt",
             },
             lastMessage: {
-              $first: '$lastMessage',
+              $first: "$lastMessage",
             },
             stage: {
-              $first: '$stage',
+              $first: "$stage",
             },
             user: {
-              $first: '$user',
+              $first: "$user",
             },
             grade: {
-              $first: '$grade',
+              $first: "$grade",
             },
             tags: {
-              $addToSet: '$tags',
+              $addToSet: "$tags",
             },
             tasks: {
-              $addToSet: '$tasks',
+              $addToSet: "$tasks",
             },
             messageTask: {
-              $first: '$messageTask',
+              $first: "$messageTask",
             },
           },
         },
@@ -1128,15 +1138,15 @@ module.exports = (io, socket) => {
             workAt: 1,
             lastMessage: {
               $mergeObjects: [
-                { $arrayElemAt: ['$lastMessage', 0] }, // Extract the first element
-                { task: '$messageTask' }, // Nest the task field inside lastMessage
+                { $arrayElemAt: ["$lastMessage", 0] }, // Extract the first element
+                { task: "$messageTask" }, // Nest the task field inside lastMessage
               ],
             },
             stage: {
-              _id: '$stage._id',
-              value: '$stage.value',
-              label: '$stage.label',
-              color: '$stage.color',
+              _id: "$stage._id",
+              value: "$stage.value",
+              label: "$stage.label",
+              color: "$stage.color",
             },
             user: 1,
             grade: 1,
@@ -1147,22 +1157,22 @@ module.exports = (io, socket) => {
       ];
 
       const conversations = await ConversationModel.aggregate(pipeline);
-      return io.emit('conversation:update', { conversation: conversations[0] });
+      return io.emit("conversation:update", { conversation: conversations[0] });
     } catch (e) {
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
   const doneTask = async ({ id }) => {
     try {
       const task = await TaskModel.findOne({ _id: id }).populate(
-        'conversation'
+        "conversation"
       );
       await TaskModel.updateOne({ _id: id }, { $set: { done: true } });
       await getOneTask({ id: task?._id });
       await getOneConversation({ selectedChatId: task?.conversation.chat_id });
     } catch (e) {
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -1174,7 +1184,7 @@ module.exports = (io, socket) => {
       let botMessage;
       let dtoMessage;
 
-      if (conversation.type === 'private') {
+      if (conversation.type === "private") {
         botMessage = await telegramSendMessage(conversation?.chat_id, text);
         dtoMessage = {
           message_id: botMessage.id,
@@ -1185,11 +1195,11 @@ module.exports = (io, socket) => {
           },
           chat: {
             id: conversation?.chat_id,
-            type: 'private',
+            type: "private",
           },
           date: botMessage.date,
           text: botMessage.message,
-          type: 'text',
+          type: "text",
           unread: false,
         };
       } else {
@@ -1219,7 +1229,7 @@ module.exports = (io, socket) => {
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -1234,10 +1244,10 @@ module.exports = (io, socket) => {
 
   const getCounterAgentStatus = (status) => {
     const statusList = [
-      { value: 'CHECK', label: 'На проверке' },
-      { value: 'RECHECK', label: 'Требует уточнения' },
-      { value: 'FAIL', label: 'На проверке' },
-      { value: 'ACTIVE', label: 'На проверке' },
+      { value: "CHECK", label: "На проверке" },
+      { value: "RECHECK", label: "Требует уточнения" },
+      { value: "FAIL", label: "На проверке" },
+      { value: "ACTIVE", label: "На проверке" },
     ];
     return statusList.find((item) => item.value === status);
   };
@@ -1249,7 +1259,7 @@ module.exports = (io, socket) => {
       });
       const tag = await addTag({
         id: conversation?._id,
-        value: 'Задача',
+        value: "Задача",
       });
 
       if (!data?.link) {
@@ -1264,38 +1274,38 @@ module.exports = (io, socket) => {
           data.link = link;
         } catch (e) {
           console.log(e);
-          socket.emit('error', { message: e.message });
+          socket.emit("error", { message: e.message });
         }
       }
       if (conversation?.members?.length > 0) {
         for (const member of conversation?.members) {
-          const user = await getUser(member?.id, 'TGID');
+          const user = await getUser(member?.id, "TGID");
           if (user) continue;
-          await checkUser(member?.id, 'TGID', true);
+          await checkUser(member?.id, "TGID", true);
         }
       }
       var timestamp = Date.now();
       var date = new Date(timestamp);
       var formatOptions = {
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric',
+        day: "numeric",
+        month: "numeric",
+        year: "numeric",
       };
-      var formattedDate = date.toLocaleDateString('ru-RU', formatOptions);
+      var formattedDate = date.toLocaleDateString("ru-RU", formatOptions);
       const text = `${data.title} от ${data.user.username}\n\n→ ${
         data?.link
       }\n\n<pre>Объем: ${data?.volume}\n\n← Отдают: ${
         data?.give
       }\n→ Получают: ${data?.take}\n\n${
-        data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ''
+        data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
       }${
         data?.counteragent?.name
           ? `• Отправитель: ${data?.counteragent?.name} (Статус: ${
               getCounterAgentStatus(data?.counteragent?.status)?.label
             })\n`
-          : ''
+          : ""
       }${
-        data?.requisites ? `• Реквизиты получателя: ${data?.requisites}\n` : ''
+        data?.requisites ? `• Реквизиты получателя: ${data?.requisites}\n` : ""
       }• Регулярность: ${data?.regularity}\n• Сроки: ${
         data?.date
       }\n• Комментарий: ${data?.comment}\n\nУсловия: ${
@@ -1312,9 +1322,9 @@ module.exports = (io, socket) => {
       console.log(response);
       //-1001815632960
       const message = await botSendMessage(-1001815632960, text, {
-        parse_mode: 'HTML',
+        parse_mode: "HTML",
       });
-      message.type = 'text';
+      message.type = "text";
       message.from.id = data.user._id;
       message.from.first_name = data.user.username;
       message.unread = false;
@@ -1336,23 +1346,23 @@ module.exports = (io, socket) => {
         }, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${
           data?.volume
         }\n\n← Отдают: ${data?.give}\n→ Получают: ${data?.take}\n\n${
-          data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ''
+          data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
         }• Сроки: ${data?.date}\n${
           data?.counteragent?.name
             ? `• Отправитель: ${data?.counteragent?.name} (Статус: ${
                 getCounterAgentStatus(data?.counteragent?.status)?.label
               })\n`
-            : ''
+            : ""
         }• Реквизиты получателя: ${data?.requisites}\n• Регулярность: ${
           data?.regularity
         }\n• Сроки: ${data?.date}\n• Комментарий: ${
           data?.comment
         }\n\nУсловия: ${data?.conditions}</pre>`,
         {
-          parse_mode: 'HTML',
+          parse_mode: "HTML",
         }
       );
-      msg.type = 'text';
+      msg.type = "text";
       msg.from.id = data.user._id;
       msg.from.first_name = data.user.username;
       msg.unread = false;
@@ -1367,7 +1377,7 @@ module.exports = (io, socket) => {
         }
       );
 
-      const stage = await StageModel.findOne({ value: 'task' });
+      const stage = await StageModel.findOne({ value: "task" });
       await stageHistoryService.create({
         stageId: stage._id,
         convId: new ObjectId(id),
@@ -1381,7 +1391,7 @@ module.exports = (io, socket) => {
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -1411,14 +1421,14 @@ module.exports = (io, socket) => {
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
   const sendChat = async ({ id, user }) => {
     try {
-      const stage = await StageModel.findOne({ value: 'created_chat' });
-      const tag = await TagModel.findOne({ value: 'Личка' });
+      const stage = await StageModel.findOne({ value: "created_chat" });
+      const tag = await TagModel.findOne({ value: "Личка" });
       await ConversationModel.updateOne(
         { _id: id },
         {
@@ -1451,13 +1461,13 @@ module.exports = (io, socket) => {
       return await sendMessage({
         id,
         text: `Личный кабинет Moneyport #${chat.id}: ${chat.chat_url}`,
-        type: 'text',
+        type: "text",
         user,
       });
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
@@ -1469,18 +1479,18 @@ module.exports = (io, socket) => {
 
       const msg = await botSendMessage(
         conversation?.chat_id,
-        'Спасибо за Ваше обращение!\n\nВ целях повышения качества обслуживания клиентов, просим Вас оценить консультацию менеджера.',
+        "Спасибо за Ваше обращение!\n\nВ целях повышения качества обслуживания клиентов, просим Вас оценить консультацию менеджера.",
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: 'Хорошо', callback_data: 'grade_high' }],
-              [{ text: 'Нормально', callback_data: 'grade_middle' }],
-              [{ text: 'Плохо', callback_data: 'grade_low' }],
+              [{ text: "Хорошо", callback_data: "grade_high" }],
+              [{ text: "Нормально", callback_data: "grade_middle" }],
+              [{ text: "Плохо", callback_data: "grade_low" }],
             ],
           },
         }
       );
-      msg.type = 'text';
+      msg.type = "text";
       msg.from.id = user._id;
       msg.from.first_name = user.username;
       msg.unread = false;
@@ -1505,32 +1515,32 @@ module.exports = (io, socket) => {
     } catch (e) {
       console.log(e);
 
-      socket.emit('error', { message: e.message });
+      socket.emit("error", { message: e.message });
     }
   };
 
-  socket.on('conversations:get', getConversations);
-  socket.on('conversations:getSearch', getSearchedConversations);
-  socket.on('conversations:getOne', getOneConversation);
+  socket.on("conversations:get", getConversations);
+  socket.on("conversations:getSearch", getSearchedConversations);
+  socket.on("conversations:getOne", getOneConversation);
 
-  socket.on('conversation:updateStage', updateStage);
-  socket.on('conversation:editStage', editStage);
-  socket.on('conversation:deleteStage', deleteStage);
-  socket.on('conversation:moveStage', moveStage);
+  socket.on("conversation:updateStage", updateStage);
+  socket.on("conversation:editStage", editStage);
+  socket.on("conversation:deleteStage", deleteStage);
+  socket.on("conversation:moveStage", moveStage);
 
-  socket.on('conversation:updateUser', updateUser);
-  socket.on('conversation:updateTags', updateTags);
-  socket.on('conversation:createTag', createTag);
-  socket.on('conversation:removeTag', removeTag);
+  socket.on("conversation:updateUser", updateUser);
+  socket.on("conversation:updateTags", updateTags);
+  socket.on("conversation:createTag", createTag);
+  socket.on("conversation:removeTag", removeTag);
 
-  socket.on('conversation:createComment', createComment);
-  socket.on('conversation:createTask', createTask);
-  socket.on('conversation:doneTask', doneTask);
+  socket.on("conversation:createComment", createComment);
+  socket.on("conversation:createTask", createTask);
+  socket.on("conversation:doneTask", doneTask);
 
-  socket.on('conversation:createMoneysend', createMoneysend);
-  socket.on('conversation:read', read);
-  socket.on('conversation:sendChat', sendChat);
-  socket.on('conversation:sendGrade', sendGrade);
+  socket.on("conversation:createMoneysend", createMoneysend);
+  socket.on("conversation:read", read);
+  socket.on("conversation:sendChat", sendChat);
+  socket.on("conversation:sendGrade", sendGrade);
 
-  socket.on('message:sendMessage', sendMessage);
+  socket.on("message:sendMessage", sendMessage);
 };
