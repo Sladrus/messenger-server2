@@ -670,7 +670,9 @@ module.exports = (io, socket) => {
           },
         },
       ];
-      const conversations = await ConversationModel.aggregate(pipeline);
+      const conversations = await ConversationModel.aggregate(pipeline, {
+        allowDiskUse: true,
+      });
       console.log(conversations);
       return socket.emit("conversations:setSearch", { conversations });
     } catch (e) {
