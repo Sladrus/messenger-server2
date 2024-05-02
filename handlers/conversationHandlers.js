@@ -305,7 +305,8 @@ module.exports = (io, socket) => {
     return io.emit("conversation:update", { conversation: conversations[0] });
   };
 
-  const getConversations = async ({ filter, page, limit}) => {
+  const getConversations = async ({ filter, page, limit }) => {
+    console.log(page, limit);
     try {
       const pipeline = [
         {
@@ -446,7 +447,7 @@ module.exports = (io, socket) => {
             data: [
               // { $skip: (page - 1) * limit },
               { $limit: limit * page },
-            ], 
+            ],
           },
         },
       ];
@@ -495,7 +496,9 @@ module.exports = (io, socket) => {
           },
         });
       }
-      const data = await ConversationModel.aggregate(pipeline);
+      const data = await ConversationModel.aggregate(pipeline, {
+        allowDiskUse: true,
+      });
       // console.log(data[0].metadata);
       return socket.emit("conversations:set", { conversations: data[0] });
     } catch (e) {
@@ -668,7 +671,7 @@ module.exports = (io, socket) => {
         },
       ];
       const conversations = await ConversationModel.aggregate(pipeline);
-
+      console.log(conversations);
       return socket.emit("conversations:setSearch", { conversations });
     } catch (e) {
       socket.emit("error", { message: e.message });
