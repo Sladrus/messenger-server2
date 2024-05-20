@@ -10,6 +10,8 @@ const { telegramSendMessage } = require("../telegram");
 const { TaskModel } = require("../models/taskModel");
 const stageHistoryService = require("../service/stageHistoryService");
 const { ReadHistoryModel } = require("../models/readHistoryModel");
+const { OrderModel } = require("../models/orderModel");
+const { OrderStatusModel } = require("../models/orderStatusModel");
 const ObjectId = mongoose.Types.ObjectId;
 
 const token = process.env.API_TOKEN;
@@ -305,6 +307,15 @@ module.exports = (io, socket) => {
     return io.emit("conversation:update", { conversation: conversations[0] });
   };
 
+  const findOneOrder = async (id) => {
+    const order = await OrderModel.findOne({ _id: new ObjectId(id) }).populate([
+      "conversation",
+      "user",
+      "stage",
+    ]);
+    return io.emit("order:update", { order });
+  };
+
   const getConversations = async ({ filter, page, limit }) => {
     console.log(page, limit);
     try {
@@ -499,7 +510,6 @@ module.exports = (io, socket) => {
       const data = await ConversationModel.aggregate(pipeline, {
         allowDiskUse: true,
       });
-      // console.log(data[0].metadata);
       return socket.emit("conversations:set", { conversations: data[0] });
     } catch (e) {
       console.log(e);
@@ -1259,9 +1269,11 @@ module.exports = (io, socket) => {
 
   const createMoneysend = async ({ id, data }) => {
     try {
+      console.log(id, data);
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
       });
+
       const tag = await addTag({
         id: conversation?._id,
         value: "Задача",
@@ -1282,6 +1294,17 @@ module.exports = (io, socket) => {
           socket.emit("error", { message: e.message });
         }
       }
+
+      const orderStatus = await OrderStatusModel.findOne({ value: "new" });
+      const conversationsCount = await OrderModel.find({ conversation: id });
+      const order = await OrderModel.create({
+        ...data,
+        stage: orderStatus,
+        title: `#${(conversationsCount?.length || 0) + 1} - ${
+          conversation?.title
+        }`,
+      });
+      console.log(order);
       if (conversation?.members?.length > 0) {
         for (const member of conversation?.members) {
           const user = await getUser(member?.id, "TGID");
@@ -1299,9 +1322,9 @@ module.exports = (io, socket) => {
       var formattedDate = date.toLocaleDateString("ru-RU", formatOptions);
       const text = `${data.title} от ${data.user.username}\n\n→ ${
         data?.link
-      }\n\n<pre>Объем: ${data?.volume}\n\n← Отдают: ${
-        data?.give
-      }\n→ Получают: ${data?.take}\n\n${
+      }\n\n<pre>Объем: ${data?.amount}\n\n← Отдают: ${
+        data?.from
+      }\n→ Получают: ${data?.to}\n\n${
         data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
       }${
         data?.counteragent?.name
@@ -1326,6 +1349,7 @@ module.exports = (io, socket) => {
       });
       console.log(response);
       //-1001815632960
+      //-1002028432379
       const message = await botSendMessage(-1001815632960, text, {
         parse_mode: "HTML",
       });
@@ -1349,8 +1373,8 @@ module.exports = (io, socket) => {
         `Отлично! Задача зарегистрирована под номером ${
           response?.id
         }, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${
-          data?.volume
-        }\n\n← Отдают: ${data?.give}\n→ Получают: ${data?.take}\n\n${
+          data?.amount
+        }\n\n← Отдают: ${data?.from}\n→ Получают: ${data?.to}\n\n${
           data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
         }• Сроки: ${data?.date}\n${
           data?.counteragent?.name
@@ -1393,6 +1417,7 @@ module.exports = (io, socket) => {
         },
         { $set: { stage: new ObjectId(stage._id), updatedAt: new Date() } }
       );
+      await findOneOrder(order?._id);
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
@@ -1545,6 +1570,8 @@ module.exports = (io, socket) => {
   socket.on("conversation:createMoneysend", createMoneysend);
   socket.on("conversation:read", read);
   socket.on("conversation:sendChat", sendChat);
+  socket.on("conversation:sendGrade", sendGrade);
+
   socket.on("conversation:sendGrade", sendGrade);
 
   socket.on("message:sendMessage", sendMessage);
