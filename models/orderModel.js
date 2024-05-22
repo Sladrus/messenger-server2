@@ -23,6 +23,7 @@ var orderSchema = new Schema({
   conditions: { type: String },
   stage: { type: Schema.Types.ObjectId, ref: "order_statuses" },
   user: { type: Schema.Types.ObjectId, ref: "user" },
+  responsible: { type: Schema.Types.ObjectId, ref: "user" },
   conversation: {
     type: Schema.Types.ObjectId,
     ref: "conversation",

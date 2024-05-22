@@ -7,6 +7,16 @@ const { default: mongoose } = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
 module.exports = (io, socket) => {
+  const findOneOrder = async (id) => {
+    const order = await OrderModel.findOne({ _id: new ObjectId(id) }).populate([
+      "conversation",
+      "user",
+      "stage",
+      "responsible",
+    ]);
+    return io.emit("order:update", { order });
+  };
+
   const getOrderStages = async () => {
     try {
       const stages = await OrderStatusModel.find().sort({ position: 1 });
@@ -14,6 +24,7 @@ module.exports = (io, socket) => {
         "stage",
         "conversation",
         "user",
+        "responsible",
       ]);
       console.log(orders);
       return io.emit("orders:set", { stages, orders });
@@ -77,7 +88,47 @@ module.exports = (io, socket) => {
     }
   };
 
+  const updateStage = async ({ id, stageId }) => {
+    try {
+      await OrderModel.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        { $set: { stage: new ObjectId(stageId), updatedAt: new Date() } }
+      );
+      return await findOneOrder(id);
+    } catch (e) {
+      console.log(e);
+      socket.emit("error", { message: e.message });
+    }
+  };
+
+  const updateUser = async ({ id, userId }) => {
+    console.log(id, userId);
+
+    try {
+      await OrderModel.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        {
+          $set: {
+            responsible: userId ? new ObjectId(userId) : null,
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      return await findOneOrder(id);
+    } catch (e) {
+      console.log(e);
+      socket.emit("error", { message: e.message });
+    }
+  };
+
   socket.on("orders:get", getOrderStages);
   socket.on("orders:createStatus", createOrderStage);
   socket.on("orders:moveStage", moveStage);
+  socket.on("order:updateStage", updateStage);
+  socket.on("order:updateUser", updateUser);
 };

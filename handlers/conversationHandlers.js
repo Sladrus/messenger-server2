@@ -312,6 +312,7 @@ module.exports = (io, socket) => {
       "conversation",
       "user",
       "stage",
+      "responsible",
     ]);
     return io.emit("order:update", { order });
   };
