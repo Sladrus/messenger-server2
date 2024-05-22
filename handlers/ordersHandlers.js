@@ -20,12 +20,9 @@ module.exports = (io, socket) => {
   const getOrderStages = async () => {
     try {
       const stages = await OrderStatusModel.find().sort({ position: 1 });
-      const orders = await OrderModel.find().populate([
-        "stage",
-        "conversation",
-        "user",
-        "responsible",
-      ]);
+      const orders = await OrderModel.find()
+        .sort({ updatedAt: -1 })
+        .populate(["stage", "conversation", "user", "responsible"]);
       console.log(orders);
       return io.emit("orders:set", { stages, orders });
     } catch (e) {
@@ -75,11 +72,9 @@ module.exports = (io, socket) => {
       await recordToMove.save();
 
       const stages = await OrderStatusModel.find().sort({ position: 1 });
-      const orders = await OrderModel.find().populate([
-        "stage",
-        "conversation",
-        "user",
-      ]);
+      const orders = await OrderModel.find()
+        .sort({ updatedAt: -1 })
+        .populate(["stage", "conversation", "user"]);
 
       return io.emit("orders:set", { stages, orders });
     } catch (e) {
