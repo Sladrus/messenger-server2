@@ -1503,7 +1503,7 @@ module.exports = (io, socket) => {
   };
 
   const sendGrade = async ({ id, user }) => {
-    console.log(id, user);
+    
     try {
       const conversation = await ConversationModel.findOne({
         _id: id,
