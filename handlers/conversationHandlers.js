@@ -1503,6 +1503,7 @@ module.exports = (io, socket) => {
   };
 
   const sendGrade = async ({ id, user }) => {
+    console.log(id, user);
     try {
       const conversation = await ConversationModel.findOne({
         _id: id,
@@ -1571,8 +1572,6 @@ module.exports = (io, socket) => {
   socket.on("conversation:createMoneysend", createMoneysend);
   socket.on("conversation:read", read);
   socket.on("conversation:sendChat", sendChat);
-  socket.on("conversation:sendGrade", sendGrade);
-
   socket.on("conversation:sendGrade", sendGrade);
 
   socket.on("message:sendMessage", sendMessage);
