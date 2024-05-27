@@ -100,7 +100,7 @@ module.exports = (io, socket) => {
         {
           _id: new ObjectId(id),
         },
-        { $set: { stage: new ObjectId(stageId), updatedAt: new Date() } }
+        { $set: { stage: new ObjectId(stageId), updatedAt: Date.now() } }
       );
       return await findOneOrder(id);
     } catch (e) {
@@ -120,7 +120,7 @@ module.exports = (io, socket) => {
         {
           $set: {
             responsible: userId ? new ObjectId(userId) : null,
-            updatedAt: new Date(),
+            updatedAt: Date.now(),
           },
         }
       );

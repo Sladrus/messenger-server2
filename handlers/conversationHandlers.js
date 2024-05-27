@@ -1304,8 +1304,8 @@ module.exports = (io, socket) => {
         title: `#${(conversationsCount?.length || 0) + 1} - ${
           conversation?.title
         }`,
+        createdAt: Date.now()
       });
-      console.log(order);
       if (conversation?.members?.length > 0) {
         for (const member of conversation?.members) {
           const user = await getUser(member?.id, "TGID");
