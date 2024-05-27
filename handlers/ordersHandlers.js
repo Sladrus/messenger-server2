@@ -17,13 +17,24 @@ module.exports = (io, socket) => {
     return io.emit("order:update", { order });
   };
 
-  const getOrderStages = async () => {
+  const getOrderStages = async ({ filter }) => {
+    console.log(filter);
+    const data = {};
+    if (filter?.stage !== "all") data.stage = filter?.stage;
+    if (filter?.responsible !== "all") {
+      if (filter?.responsible === "nobody") data.responsible = null;
+      else data.responsible = filter?.responsible;
+    }
+    if (filter?.type !== "all") data.type = filter?.type;
+    data.createdAt = {
+      $gte: new Date(filter?.dateRange?.startDate),
+      $lt: new Date(filter?.dateRange?.endDate),
+    };
     try {
       const stages = await OrderStatusModel.find().sort({ position: 1 });
-      const orders = await OrderModel.find()
+      const orders = await OrderModel.find(data)
         .sort({ updatedAt: -1 })
         .populate(["stage", "conversation", "user", "responsible"]);
-      console.log(orders);
       return io.emit("orders:set", { stages, orders });
     } catch (e) {
       socket.emit("error", { message: e.message });
