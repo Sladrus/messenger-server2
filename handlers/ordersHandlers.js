@@ -18,7 +18,6 @@ module.exports = (io, socket) => {
   };
 
   const getOrderStages = async ({ filter }) => {
-    console.log(filter);
     const data = {};
     if (filter?.stage !== "all") data.stage = filter?.stage;
     if (filter?.responsible !== "all") {
@@ -137,4 +136,5 @@ module.exports = (io, socket) => {
   socket.on("orders:moveStage", moveStage);
   socket.on("order:updateStage", updateStage);
   socket.on("order:updateUser", updateUser);
+
 };

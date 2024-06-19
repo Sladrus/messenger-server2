@@ -16,7 +16,11 @@ var orderSchema = new Schema({
     type: String,
   },
   from: { type: String },
+  fromMethod: { type: String },
+  fromCity: { type: String },
   to: { type: String },
+  toMethod: { type: String },
+  toCity: { type: String },
   regularity: { type: String },
   date: { type: String },
   comment: { type: String },
@@ -32,12 +36,12 @@ var orderSchema = new Schema({
   createdAt: {
     type: Date,
     required: true,
-    default:  Date.now(),
+    default: Date.now(),
   },
   updatedAt: {
     type: Date,
     required: true,
-    default:  Date.now(),
+    default: Date.now(),
   },
 });
 

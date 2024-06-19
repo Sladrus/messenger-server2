@@ -1219,7 +1219,9 @@ module.exports = (io, socket) => {
           unread: false,
         };
       } else {
-        dtoMessage = await botSendMessage(conversation?.chat_id, text);
+        dtoMessage = await botSendMessage(conversation?.chat_id, text, {
+          parse_mode: "HTML",
+        });
         dtoMessage.type = type;
         dtoMessage.from.id = user._id;
         dtoMessage.from.first_name = user.username;
@@ -1304,7 +1306,7 @@ module.exports = (io, socket) => {
         title: `#${(conversationsCount?.length || 0) + 1} - ${
           conversation?.title
         }`,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
       if (conversation?.members?.length > 0) {
         for (const member of conversation?.members) {
@@ -1325,7 +1327,11 @@ module.exports = (io, socket) => {
         data?.link
       }\n\n<pre>Объем: ${data?.amount}\n\n← Отдают: ${
         data?.from
-      }\n→ Получают: ${data?.to}\n\n${
+      }\n← Способ отдачи: ${data?.fromMethod}\n${
+        data?.fromCity ? `→ Город отдачи: ${data?.fromCity}` : ""
+      }\n\n→ Получают: ${data?.to}\n← Способ получения: ${data?.toMethod}\n${
+        data?.toCity ? `→ Город получения: ${data?.toCity}` : ""
+      }\n\n${
         data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
       }${
         data?.counteragent?.name
@@ -1351,7 +1357,7 @@ module.exports = (io, socket) => {
       console.log(response);
       //-1001815632960
       //-1002028432379
-      const message = await botSendMessage(-1001815632960, text, {
+      const message = await botSendMessage(-1002028432379, text, {
         parse_mode: "HTML",
       });
       message.type = "text";
@@ -1375,7 +1381,11 @@ module.exports = (io, socket) => {
           response?.id
         }, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${
           data?.amount
-        }\n\n← Отдают: ${data?.from}\n→ Получают: ${data?.to}\n\n${
+        }\n\n← Отдают: ${data?.from}\n← Способ отдачи: ${data?.fromMethod}\n${
+          data?.fromCity ? `→ Город отдачи: ${data?.fromCity}` : ""
+        }\n\n→ Получают: ${data?.to}\n← Способ получения: ${data?.toMethod}\n${
+          data?.toCity ? `→ Город получения: ${data?.toCity}` : ""
+        }\n\n${
           data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
         }• Сроки: ${data?.date}\n${
           data?.counteragent?.name
@@ -1503,7 +1513,6 @@ module.exports = (io, socket) => {
   };
 
   const sendGrade = async ({ id, user }) => {
-    
     try {
       const conversation = await ConversationModel.findOne({
         _id: id,
