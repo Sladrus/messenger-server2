@@ -33,7 +33,9 @@ module.exports = (io, socket) => {
       const stages = await OrderStatusModel.find().sort({ position: 1 });
       const orders = await OrderModel.find(data)
         .sort({ updatedAt: -1 })
-        .populate(["stage", "conversation", "user", "responsible"]);
+        .populate(["stage", "conversation", "user", "responsible"])
+        .sort({ _id: -1 }) // Сортировка по ID в порядке убывания, чтобы получить последние задачи
+        .limit(100); // Ограничение количества задач до 100
       return io.emit("orders:set", { stages, orders });
     } catch (e) {
       socket.emit("error", { message: e.message });
@@ -136,5 +138,4 @@ module.exports = (io, socket) => {
   socket.on("orders:moveStage", moveStage);
   socket.on("order:updateStage", updateStage);
   socket.on("order:updateUser", updateUser);
-
 };
