@@ -35,7 +35,7 @@ module.exports = (io, socket) => {
         .sort({ updatedAt: -1 })
         .populate(["stage", "conversation", "user", "responsible"])
         .sort({ _id: -1 }) // Сортировка по ID в порядке убывания, чтобы получить последние задачи
-        .limit(100); // Ограничение количества задач до 100
+        .limit(1); // Ограничение количества задач до 100
       return io.emit("orders:set", { stages, orders });
     } catch (e) {
       socket.emit("error", { message: e.message });
