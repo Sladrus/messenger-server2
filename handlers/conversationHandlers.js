@@ -1379,9 +1379,9 @@ module.exports = (io, socket) => {
           data?.amount
         }\n\n← Отдают: ${data?.from}\n${
           data?.fromCity ? `→ Город отдачи: ${data?.fromCity}` : ""
-        }\n\n→ Получают: ${data?.to}\n${
+        }\n→ Получают: ${data?.to}\n${
           data?.toCity ? `→ Город получения: ${data?.toCity}` : ""
-        }\n\n${
+        }\n${
           data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
         }• Сроки: ${data?.date}\n${
           data?.counteragent?.name
