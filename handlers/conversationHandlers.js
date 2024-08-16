@@ -1325,11 +1325,9 @@ module.exports = (io, socket) => {
       var formattedDate = date.toLocaleDateString("ru-RU", formatOptions);
       const text = `${data.title} от ${data.user.username}\n\n→ ${
         data?.link
-      }\n\n<pre>Объем: ${data?.amount}\n\n← Отдают: ${
-        data?.from
-      }\n← Способ отдачи: ${data?.fromMethod}\n${
+      }\n\n<pre>Объем: ${data?.amount}\n\n← Отдают: ${data?.from}\n${
         data?.fromCity ? `→ Город отдачи: ${data?.fromCity}` : ""
-      }\n\n→ Получают: ${data?.to}\n← Способ получения: ${data?.toMethod}\n${
+      }\n\n→ Получают: ${data?.to}\n${
         data?.toCity ? `→ Город получения: ${data?.toCity}` : ""
       }\n\n${data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""}${
         data?.counteragent?.name
@@ -1379,9 +1377,9 @@ module.exports = (io, socket) => {
           response?.id
         }, уже зову специалиста отдела процессинга. Пожалуйста, ожидайте.\n\n<pre>Объем: ${
           data?.amount
-        }\n\n← Отдают: ${data?.from}\n← Способ отдачи: ${data?.fromMethod}\n${
+        }\n\n← Отдают: ${data?.from}\n${
           data?.fromCity ? `→ Город отдачи: ${data?.fromCity}` : ""
-        }\n\n→ Получают: ${data?.to}\n← Способ получения: ${data?.toMethod}\n${
+        }\n\n→ Получают: ${data?.to}\n${
           data?.toCity ? `→ Город получения: ${data?.toCity}` : ""
         }\n\n${
           data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
