@@ -1331,9 +1331,7 @@ module.exports = (io, socket) => {
         data?.fromCity ? `→ Город отдачи: ${data?.fromCity}` : ""
       }\n\n→ Получают: ${data?.to}\n← Способ получения: ${data?.toMethod}\n${
         data?.toCity ? `→ Город получения: ${data?.toCity}` : ""
-      }\n\n${
-        data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""
-      }${
+      }\n\n${data?.type?.name ? `• Тип перевода: ${data?.type?.name}\n` : ""}${
         data?.counteragent?.name
           ? `• Отправитель: ${data?.counteragent?.name} (Статус: ${
               getCounterAgentStatus(data?.counteragent?.status)?.label
@@ -1357,7 +1355,7 @@ module.exports = (io, socket) => {
       console.log(response);
       //-1001815632960
       //-1002028432379
-      const message = await botSendMessage(-1002028432379, text, {
+      const message = await botSendMessage(-1001815632960, text, {
         parse_mode: "HTML",
       });
       message.type = "text";
