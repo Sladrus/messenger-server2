@@ -279,6 +279,7 @@ module.exports = (bot, io) => {
   };
 
   bot.on("text", async (msg) => {
+    console.log(msg);
     if (msg.text === "/work") {
       try {
         let conversation = await ConversationModel.findOne({
