@@ -491,7 +491,7 @@ module.exports = (bot, io) => {
       unreadCount: 0,
       type: msg.chat.type,
       stage: stage._id,
-      workAt: Date.now(),
+      // workAt: Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
