@@ -310,11 +310,17 @@ module.exports = (bot, io) => {
 
   const createMessage = async (msg) => {
     try {
-      const conversation = await ConversationModel.findOne({
+      let conversation = await ConversationModel.findOne({
         chat_id: Number(msg.chat.id),
       });
       if (!conversation) {
-        return;
+        conversation = await ConversationModel.findOne({
+          chat_id: Number(msg.chat.id),
+          title: msg.chat.title,
+          // workAt: Date.now(),
+          createdAt: Date.now(),
+          updatededAt: Date.now(),
+        });
       }
       const order = await getOrder(Number(msg.chat.id));
 
@@ -468,6 +474,7 @@ module.exports = (bot, io) => {
       unreadCount: 0,
       type: msg.chat.type,
       stage: stage._id,
+      workAt: Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
