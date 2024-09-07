@@ -255,6 +255,7 @@ module.exports = (bot, io) => {
           type: "supergroup",
         });
       }
+      console.log(conversation);
       msg.type = "text";
       msg.unread = true;
 
