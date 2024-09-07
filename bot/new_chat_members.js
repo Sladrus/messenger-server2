@@ -317,7 +317,7 @@ module.exports = (bot, io) => {
         conversation = await ConversationModel.findOne({
           chat_id: Number(msg.chat.id),
           title: msg.chat.title,
-          // workAt: Date.now(),
+          workAt: Date.now(),
           createdAt: Date.now(),
           updatededAt: Date.now(),
         });
