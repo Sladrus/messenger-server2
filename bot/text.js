@@ -279,6 +279,7 @@ module.exports = (bot, io) => {
   };
 
   bot.on("text", async (msg) => {
+    console.log(msg);
     if (msg.text === "/work") {
       try {
         let conversation = await ConversationModel.findOne({
@@ -320,13 +321,6 @@ module.exports = (bot, io) => {
     let conversation = await ConversationModel.findOne({
       chat_id: Number(msg.chat.id),
     });
-    if (!conversation) {
-      conversation = await ConversationModel.create({
-        title: msg.chat.title,
-        chat_id: Number(msg.chat.id),
-        type: "supergroup",
-      });
-    }
     await createMessage(msg);
   });
 };
