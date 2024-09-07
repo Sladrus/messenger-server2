@@ -318,7 +318,6 @@ module.exports = (io, socket) => {
   };
 
   const getConversations = async ({ filter, page, limit }) => {
-    console.log(page, limit);
     try {
       const pipeline = [
         {
