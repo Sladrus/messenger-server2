@@ -291,8 +291,7 @@ module.exports = (bot, io) => {
             type: "supergroup",
           });
         }
-        console.log(conversation);
-        const stage = await StageModel.findOne({ value: "archive" });
+        const stage = await StageModel.findOne({ value: "raw" });
         if (!conversation?.workAt) {
           await ConversationModel.updateOne(
             {

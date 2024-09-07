@@ -370,6 +370,7 @@ module.exports = (bot, io) => {
           type: msg.chat.type,
           stage: stage._id,
           createdAt: Date.now(),
+          createdAt: Date.now(),
           updatedAt: Date.now(),
         });
         conversation = newConversation;
@@ -450,6 +451,22 @@ module.exports = (bot, io) => {
             {
               $set: {
                 link,
+              },
+            }
+          );
+        } catch (e) {
+          // console.log(e);
+        }
+      }
+      if (!conversation?.workAt) {
+        try {
+          await ConversationModel.updateOne(
+            {
+              _id: new ObjectId(conversation?._id),
+            },
+            {
+              $set: {
+                workAt: Date.now(),
               },
             }
           );
