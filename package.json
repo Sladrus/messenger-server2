@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@mtproto/core": "^6.3.0",
     "axios": "^1.5.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
@@ -26,6 +27,7 @@
     "nodemon": "^3.0.1",
     "socket.io": "^4.7.2",
     "telegram": "^2.18.34",
+    "telegram-mtproto": "^1.0.5",
     "uuid": "^9.0.1"
   }
 }

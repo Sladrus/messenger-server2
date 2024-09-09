@@ -59,6 +59,15 @@ async function createMoneysendApi(body) {
   }
 }
 
+async function getChatUrl(chat_id) {
+  try {
+    const response = await baseApi.get(`/chats/get-url/${chat_id}`);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function sendChatApi() {
   try {
     const response = await baseApi.get(`/chat/empty`);
@@ -1462,6 +1471,54 @@ module.exports = (io, socket) => {
     }
   };
 
+  const createNewMessagesFromChat = async ({ id }) => {
+    try {
+      const conversation = await ConversationModel.findOne({
+        _id: new ObjectId(id),
+      });
+
+      const data = await getChatUrl(conversation?.chat_id);
+
+      if (!data) throw new Error(`Ошибка`);
+      if (!data?.messages?.length > 0)
+        throw new Error(
+          `Сообщения в чате ${conversation?.chat_id} отсутствуют`
+        );
+
+      const msgIds = [];
+      messages.map(async (item) => {
+        const messageDto = {
+          message_id: item?.message_id,
+          unread: false,
+          from: {
+            id: item?.sender_id,
+            username: item?.username,
+            first_name: item?.fullname,
+          },
+          chat: {
+            id: conversation?.chat_id,
+          },
+          text: item?.text,
+          photo: [],
+          type: item?.type,
+          date: 1725878466,
+        };
+        const newMessage = await MessageModel.create(messageDto);
+        msgIds.push(newMessage?._id);
+      });
+
+      await ConversationModel.updateOne(
+        { _id: conversation?._id },
+        { $set: { messages: msgIds } } //? <--------------
+      );
+
+      return await findOneConversation(id);
+    } catch (e) {
+      console.log(e);
+      socket.emit("error", { message: e.message });
+    }
+  };
+
   const sendChat = async ({ id, user }) => {
     try {
       const stage = await StageModel.findOne({ value: "created_chat" });
@@ -1576,6 +1633,11 @@ module.exports = (io, socket) => {
 
   socket.on("conversation:createMoneysend", createMoneysend);
   socket.on("conversation:read", read);
+  socket.on(
+    "conversation:createNewMessagesFromChat",
+    createNewMessagesFromChat
+  );
+
   socket.on("conversation:sendChat", sendChat);
   socket.on("conversation:sendGrade", sendGrade);
 
