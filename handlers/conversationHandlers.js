@@ -717,7 +717,7 @@ module.exports = (io, socket) => {
       })
         .populate({
           path: "messages",
-          options: { sort: { date: -1 } },
+          options: { sort: { date: 1 } },
           populate: { path: "task", populate: { path: "type" } },
         })
         .populate({
