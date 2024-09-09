@@ -1548,6 +1548,7 @@ module.exports = (io, socket) => {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
       });
+      console.log(conversation);
       await getChatHistoryFromPrivate(conversation);
 
       await getOneConversation({ selectedChatId: conversation?.chat_id });
