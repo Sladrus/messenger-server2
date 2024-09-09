@@ -1519,7 +1519,7 @@ module.exports = (io, socket) => {
           text: item?.text,
           photo: [],
           type: item?.type,
-          date: 1725878466,
+          date: item?.date,
         };
         const newMessage = await MessageModel.create(messageDto);
         msgIds.push(newMessage?._id);
