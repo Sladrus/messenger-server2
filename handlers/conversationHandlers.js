@@ -1548,10 +1548,10 @@ module.exports = (io, socket) => {
       const conversation = await ConversationModel.findOne({
         _id: new ObjectId(id),
       });
-      const messages = await getChatHistoryFromPrivate(conversation);
+      await getChatHistoryFromPrivate(conversation);
 
-      // await getOneConversation({ selectedChatId: conversation?.chat_id });
-      // return await findOneConversation(id);
+      await getOneConversation({ selectedChatId: conversation?.chat_id });
+      await findOneConversation(id);
     } catch (e) {
       socket.emit("error", { message: e.message });
     }
