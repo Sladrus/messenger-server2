@@ -68,6 +68,19 @@ async function getChatUrl(chat_id) {
   }
 }
 
+async function getChatMessages(chat_id, chat_url) {
+  try {
+    const response = await axios.post(
+      `http://localhost:5055/api/chats/getChatHistory`,
+      { chat_id, chat_url },
+      { headers: { "x-api-key": `${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function sendChatApi() {
   try {
     const response = await baseApi.get(`/chat/empty`);
@@ -1477,9 +1490,14 @@ module.exports = (io, socket) => {
         _id: new ObjectId(id),
       });
 
-      const data = await getChatUrl(conversation?.chat_id);
+      const chat_data = await getChatUrl(conversation?.chat_id);
+      if (!chat_data) throw new Error(`Ошибка при получении ссылки на чат`);
 
-      if (!data) throw new Error(`Ошибка`);
+      const data = await getChatMessages(
+        conversation?.chat_id,
+        chat_data?.chat_url
+      );
+      if (!data) throw new Error(`Ошибка при получении списка сообщений`);
       if (!data?.messages?.length > 0)
         throw new Error(
           `Сообщения в чате ${conversation?.chat_id} отсутствуют`
@@ -1509,9 +1527,10 @@ module.exports = (io, socket) => {
 
       await ConversationModel.updateOne(
         { _id: conversation?._id },
-        { $set: { messages: msgIds } } //? <--------------
+        { $set: { messages: msgIds } }
       );
 
+      await getOneConversation({ selectedChatId: conversation?.chat_id });
       return await findOneConversation(id);
     } catch (e) {
       console.log(e);
