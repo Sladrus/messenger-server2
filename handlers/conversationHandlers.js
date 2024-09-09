@@ -1503,8 +1503,10 @@ module.exports = (io, socket) => {
           `Сообщения в чате ${conversation?.chat_id} отсутствуют`
         );
       console.log(data?.messages?.length);
+
       const msgIds = [];
-      data?.messages.map(async (item) => {
+
+      for (const item of data?.messages) {
         const messageDto = {
           message_id: item?.message_id,
           unread: false,
@@ -1521,11 +1523,14 @@ module.exports = (io, socket) => {
           type: item?.type,
           date: item?.date,
         };
+
         const newMessage = await MessageModel.create(messageDto);
         console.log(newMessage);
         msgIds.push(newMessage?._id);
-      });
+      }
+
       console.log(msgIds);
+
       await ConversationModel.updateOne(
         { _id: conversation?._id },
         { $set: { messages: msgIds } }
