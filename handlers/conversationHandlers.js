@@ -1502,7 +1502,7 @@ module.exports = (io, socket) => {
         throw new Error(
           `Сообщения в чате ${conversation?.chat_id} отсутствуют`
         );
-
+      console.log(messages?.length);
       const msgIds = [];
       data?.messages.map(async (item) => {
         const messageDto = {
@@ -1524,7 +1524,7 @@ module.exports = (io, socket) => {
         const newMessage = await MessageModel.create(messageDto);
         msgIds.push(newMessage?._id);
       });
-
+      console.log(msgIds);
       await ConversationModel.updateOne(
         { _id: conversation?._id },
         { $set: { messages: msgIds } }
