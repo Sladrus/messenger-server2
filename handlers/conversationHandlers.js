@@ -1504,7 +1504,7 @@ module.exports = (io, socket) => {
         );
 
       const msgIds = [];
-      messages.map(async (item) => {
+      data?.messages.map(async (item) => {
         const messageDto = {
           message_id: item?.message_id,
           unread: false,
