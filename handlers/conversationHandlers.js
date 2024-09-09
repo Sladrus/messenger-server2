@@ -1502,7 +1502,7 @@ module.exports = (io, socket) => {
         throw new Error(
           `Сообщения в чате ${conversation?.chat_id} отсутствуют`
         );
-      console.log(messages?.length);
+      console.log(data?.messages?.length);
       const msgIds = [];
       data?.messages.map(async (item) => {
         const messageDto = {
