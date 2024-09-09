@@ -61,7 +61,7 @@ async function createMoneysendApi(body) {
 
 async function getChatUrl(chat_id) {
   try {
-    const response = await baseApi.get(`/chats/get-url/${chat_id}`);
+    const response = await baseApi.get(`/chat/get-url/${chat_id}`);
     return response.data;
   } catch (error) {
     console.log(error);
