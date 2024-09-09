@@ -1,134 +1,134 @@
-const { TelegramClient } = require('telegram');
-const { StringSession, StoreSession } = require('telegram/sessions');
-const input = require('input');
-const { NewMessage } = require('telegram/events');
-const { ConversationModel } = require('../models/conversationModel');
-const { StageModel } = require('../models/stageModel');
-const { MessageModel } = require('../models/messageModel');
-const { default: mongoose } = require('mongoose');
+const { TelegramClient } = require("telegram");
+const { StringSession, StoreSession } = require("telegram/sessions");
+const input = require("input");
+const { NewMessage } = require("telegram/events");
+const { ConversationModel } = require("../models/conversationModel");
+const { StageModel } = require("../models/stageModel");
+const { MessageModel } = require("../models/messageModel");
+const { default: mongoose } = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const { botSendMessage } = require('../bot');
-const stageHistoryService = require('../service/stageHistoryService');
+const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
+const { botSendMessage } = require("../bot");
+const stageHistoryService = require("../service/stageHistoryService");
 
-require('dotenv').config();
+require("dotenv").config();
 
 const apiId = process.env.API_ID;
 const apiHash = process.env.API_HASH;
-const storeSession = new StoreSession('./telegram/store/');
+const storeSession = new StoreSession("./telegram/store/");
 
 const findOneConversation = async (id, io) => {
   const pipeline = [
     {
       $group: {
-        _id: { chat_id: '$chat_id', createdAt: '$createdAt' },
-        updatedAt: { $max: '$updatedAt' },
-        conversation: { $first: '$$ROOT' },
+        _id: { chat_id: "$chat_id", createdAt: "$createdAt" },
+        updatedAt: { $max: "$updatedAt" },
+        conversation: { $first: "$$ROOT" },
       },
     },
     {
       $project: {
-        _id: '$conversation._id',
-        title: '$conversation.title',
-        chat_id: '$conversation.chat_id',
-        type: '$conversation.type',
-        unreadCount: '$conversation.unreadCount',
-        createdAt: '$conversation.createdAt',
-        updatedAt: '$conversation.updatedAt',
-        members: '$conversation.members',
-        workAt: '$conversation.workAt',
-        lastMessageId: { $arrayElemAt: ['$conversation.messages', -1] },
-        stage: '$conversation.stage',
-        user: '$conversation.user',
-        tags: '$conversation.tags',
+        _id: "$conversation._id",
+        title: "$conversation.title",
+        chat_id: "$conversation.chat_id",
+        type: "$conversation.type",
+        unreadCount: "$conversation.unreadCount",
+        createdAt: "$conversation.createdAt",
+        updatedAt: "$conversation.updatedAt",
+        members: "$conversation.members",
+        workAt: "$conversation.workAt",
+        lastMessageId: { $arrayElemAt: ["$conversation.messages", -1] },
+        stage: "$conversation.stage",
+        user: "$conversation.user",
+        tags: "$conversation.tags",
       },
     },
     {
       $lookup: {
-        from: 'messages',
-        localField: 'lastMessageId',
-        foreignField: '_id',
-        as: 'lastMessage',
+        from: "messages",
+        localField: "lastMessageId",
+        foreignField: "_id",
+        as: "lastMessage",
       },
     },
     {
       $lookup: {
-        from: 'stages',
-        localField: 'stage',
-        foreignField: '_id',
-        as: 'stage',
+        from: "stages",
+        localField: "stage",
+        foreignField: "_id",
+        as: "stage",
       },
     },
     {
-      $unwind: '$stage',
+      $unwind: "$stage",
     },
     {
       $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'user',
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
       },
     },
     {
       $unwind: {
-        path: '$user',
+        path: "$user",
         preserveNullAndEmptyArrays: true,
       },
     },
     {
       $lookup: {
-        from: 'tags',
-        localField: 'tags',
-        foreignField: '_id',
-        as: 'tags',
+        from: "tags",
+        localField: "tags",
+        foreignField: "_id",
+        as: "tags",
       },
     },
     {
       $unwind: {
-        path: '$tags',
+        path: "$tags",
         preserveNullAndEmptyArrays: true,
       },
     },
     {
       $group: {
-        _id: '$_id',
+        _id: "$_id",
         title: {
-          $first: '$title',
+          $first: "$title",
         },
         chat_id: {
-          $first: '$chat_id',
+          $first: "$chat_id",
         },
         type: {
-          $first: '$type',
+          $first: "$type",
         },
         unreadCount: {
-          $first: '$unreadCount',
+          $first: "$unreadCount",
         },
         createdAt: {
-          $first: '$createdAt',
+          $first: "$createdAt",
         },
         updatedAt: {
-          $first: '$updatedAt',
+          $first: "$updatedAt",
         },
         members: {
-          $first: '$members',
+          $first: "$members",
         },
         workAt: {
-          $first: '$workAt',
+          $first: "$workAt",
         },
         lastMessage: {
-          $first: '$lastMessage',
+          $first: "$lastMessage",
         },
         stage: {
-          $first: '$stage',
+          $first: "$stage",
         },
         user: {
-          $first: '$user',
+          $first: "$user",
         },
         tags: {
-          $addToSet: '$tags',
+          $addToSet: "$tags",
         },
       },
     },
@@ -164,12 +164,12 @@ const findOneConversation = async (id, io) => {
         updatedAt: 1,
         members: 1,
         workAt: 1,
-        lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+        lastMessage: { $arrayElemAt: ["$lastMessage", 0] },
         stage: {
-          _id: '$stage._id',
-          value: '$stage.value',
-          label: '$stage.label',
-          color: '$stage.color',
+          _id: "$stage._id",
+          value: "$stage.value",
+          label: "$stage.label",
+          color: "$stage.color",
         },
         user: 1,
         tags: 1,
@@ -179,7 +179,7 @@ const findOneConversation = async (id, io) => {
   const conversations = await ConversationModel.aggregate(pipeline);
   console.log(conversations[0]);
 
-  return io.emit('conversation:update', { conversation: conversations[0] });
+  return io.emit("conversation:update", { conversation: conversations[0] });
 };
 
 const createMessage = async (event, io) => {
@@ -201,7 +201,7 @@ const createMessage = async (event, io) => {
       chat_id: chat_id === user_id ? peer_id : chat_id,
     });
     console.log(conversation);
-    const stage = await StageModel.findOne({ value: 'raw' });
+    const stage = await StageModel.findOne({ value: "raw" });
 
     //-1001955007812
     if (!conversation) {
@@ -209,13 +209,13 @@ const createMessage = async (event, io) => {
         await botSendMessage(
           -1001955007812,
           `Пользователь ${
-            sender?.firstName + (sender?.lastName ? ' ' + sender?.lastName : '')
+            sender?.firstName + (sender?.lastName ? " " + sender?.lastName : "")
           } написал первое сообщение.\n\n<b>${
             message?.message
           }</b>\n\nUser ID: ${chat_id}\nUsername: ${
-            sender?.username ? '@' + sender?.username : 'Отсутствует'
+            sender?.username ? "@" + sender?.username : "Отсутствует"
           }`,
-          { parse_mode: 'HTML' }
+          { parse_mode: "HTML" }
         );
       } catch (error) {}
 
@@ -224,10 +224,10 @@ const createMessage = async (event, io) => {
           chat_id === user_id
             ? peer_id
             : sender?.firstName +
-              (sender?.lastName ? ' ' + sender?.lastName : ''),
+              (sender?.lastName ? " " + sender?.lastName : ""),
         chat_id: chat_id === user_id ? peer_id : chat_id,
         unreadCount: 0,
-        type: 'private',
+        type: "private",
         stage: stage._id,
         workAt: Date.now(),
         createdAt: Date.now(),
@@ -260,7 +260,7 @@ const createMessage = async (event, io) => {
         date: message.date,
         text: message.message,
         photo: photoId,
-        type: 'photo',
+        type: "photo",
       };
     } else {
       msg = {
@@ -272,7 +272,7 @@ const createMessage = async (event, io) => {
         },
         date: message.date,
         text: message.message,
-        type: 'text',
+        type: "text",
       };
     }
 
@@ -288,7 +288,7 @@ const createMessage = async (event, io) => {
         : {
             title:
               sender?.firstName +
-              (sender?.lastName ? ' ' + sender?.lastName : ''),
+              (sender?.lastName ? " " + sender?.lastName : ""),
             updatedAt: new Date(),
             unreadCount: conversation?.unreadCount
               ? conversation?.unreadCount + 1
@@ -321,15 +321,15 @@ async function telegramSendMessage(target, message) {
 
 async function initClient(io) {
   // return;
-  console.log('INIT');
+  console.log("INIT");
   await client.start({
-    phoneNumber: async () => await input.text('Please enter your number: '),
-    password: async () => await input.text('Please enter your password: '),
+    phoneNumber: async () => await input.text("Please enter your number: "),
+    password: async () => await input.text("Please enter your password: "),
     phoneCode: async () =>
-      await input.text('Please enter the code you received: '),
+      await input.text("Please enter the code you received: "),
     onError: (err) => console.log(err),
   });
-  console.log('You should now be connected.');
+  console.log("You should now be connected.");
   client.session.save();
 
   async function newMessage(event) {
@@ -340,4 +340,157 @@ async function initClient(io) {
   client.addEventHandler(newMessage, new NewMessage({}));
 }
 
-module.exports = { initClient, telegramSendMessage };
+const getChatHistory = async (chat_id) => {
+  try {
+    const chat = await client.getEntity(chat_id);
+    const messages = [];
+    const userCache = {};
+    let offsetId = 0;
+    const limit = 10;
+    let moreMessages = true;
+
+    while (moreMessages) {
+      const history = await client.getMessages(chat, {
+        limit: limit,
+        offsetId: offsetId,
+      });
+
+      if (history.length < limit) {
+        moreMessages = false;
+      }
+
+      for (const message of history) {
+        const action = message?.action && message?.action?.className;
+        const type = message?.message
+          ? "text"
+          : message?.media
+          ? "photo"
+          : "event";
+        let text = message?.message;
+        let user = null;
+        let username = null;
+        let fullname = null;
+
+        if (message.senderId) {
+          if (userCache[message.senderId]) {
+            user = userCache[message.senderId];
+            username = user.username;
+            fullname = user.fullname;
+          } else {
+            try {
+              const fetchedUser = await client.getEntity(message.senderId);
+              username = fetchedUser?.username || null;
+              fullname =
+                fetchedUser?.firstName + " " + (fetchedUser?.lastName || "");
+
+              userCache[message.senderId] = {
+                username: username,
+                fullname: fullname,
+              };
+            } catch (err) {
+              console.error(
+                `Failed to get user entity for ID ${message.senderId}:`,
+                err
+              );
+            }
+          }
+        }
+
+        if (type === "event") {
+          if (action === "MessageActionChatJoinedByLink")
+            text = `Пользователь ${fullname} вошел в чат`;
+          if (action === "MessageActionChatDeleteUser")
+            text = `Пользователь ${fullname} вышел из чата`;
+          if (action === "MessageActionChatEditTitle") {
+            const newTitle = message?.action?.title;
+            text = `Название чата сменилось на "${newTitle}"`;
+          }
+        }
+
+        text = type === "photo" ? "Медиа файл" : text;
+
+        messages.push({
+          message_id: message.id,
+          user_id: Number(message.senderId),
+          text: text,
+          type,
+          action,
+          date: message.date,
+          username: username,
+          fullname: fullname,
+        });
+      }
+
+      if (history.length > 0) {
+        offsetId = history[history.length - 1].id;
+      } else {
+        moreMessages = false;
+      }
+    }
+
+    return messages;
+  } catch (error) {
+    console.error("Failed to get chat history:", error);
+  }
+};
+
+const getChatHistoryFromPrivate = async (conversation) => {
+  // try {
+  // const conversation = await ConversationModel.findOne({
+  //   _id: new ObjectId(id),
+  // });
+
+  const messages = await getChatHistory(conversation?.chat_id);
+
+  // const chat_data = await getChatUrl(conversation?.chat_id);
+  // if (!chat_data) throw new Error(`Ошибка при получении ссылки на чат`);
+
+  // const data = await getChatMessages(
+  //   conversation?.chat_id,
+  //   chat_data?.chat_url
+  // );
+  // if (!data) throw new Error(`Ошибка при получении списка сообщений`);
+  if (!messages?.length > 0)
+    throw new Error(`Сообщения в чате ${conversation?.chat_id} отсутствуют`);
+
+  const msgIds = [];
+
+  for (const item of messages) {
+    const messageDto = {
+      message_id: item?.message_id,
+      unread: false,
+      from: {
+        id: item?.sender_id,
+        username: item?.username,
+        first_name: item?.fullname,
+      },
+      text: item?.text,
+      photo: [],
+      type: item?.type,
+      date: item?.date,
+    };
+
+    const newMessage = await MessageModel.create(messageDto);
+    msgIds.push(newMessage?._id);
+  }
+
+  console.log(msgIds);
+
+  // await ConversationModel.updateOne(
+  //   { _id: conversation?._id },
+  //   { $set: { messages: msgIds }, unreadCount: 0 }
+  // );
+
+  // await getOneConversation({ selectedChatId: conversation?.chat_id });
+  // return await findOneConversation(id);
+  // } catch (e) {
+  // console.log(e);
+  // socket.emit("error", { message: e.message });
+  // }
+};
+
+module.exports = {
+  initClient,
+  telegramSendMessage,
+  getChatHistoryFromPrivate,
+};

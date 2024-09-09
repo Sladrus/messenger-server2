@@ -6,7 +6,10 @@ const { TaskTypeModel } = require("../models/taskTypeModel");
 const { bot, botSendMessage, exportLink } = require("../bot");
 const { default: axios } = require("axios");
 const { StageModel } = require("../models/stageModel");
-const { telegramSendMessage } = require("../telegram");
+const {
+  telegramSendMessage,
+  getChatHistoryFromPrivate,
+} = require("../telegram");
 const { TaskModel } = require("../models/taskModel");
 const stageHistoryService = require("../service/stageHistoryService");
 const { ReadHistoryModel } = require("../models/readHistoryModel");
@@ -1540,6 +1543,20 @@ module.exports = (io, socket) => {
     }
   };
 
+  const createNewMessagesFromPrivate = async ({ id }) => {
+    try {
+      const conversation = await ConversationModel.findOne({
+        _id: new ObjectId(id),
+      });
+      const messages = await getChatHistoryFromPrivate(conversation);
+
+      // await getOneConversation({ selectedChatId: conversation?.chat_id });
+      // return await findOneConversation(id);
+    } catch (e) {
+      socket.emit("error", { message: e.message });
+    }
+  };
+
   const sendChat = async ({ id, user }) => {
     try {
       const stage = await StageModel.findOne({ value: "created_chat" });
@@ -1654,9 +1671,14 @@ module.exports = (io, socket) => {
 
   socket.on("conversation:createMoneysend", createMoneysend);
   socket.on("conversation:read", read);
+
   socket.on(
     "conversation:createNewMessagesFromChat",
     createNewMessagesFromChat
+  );
+  socket.on(
+    "conversation:createNewMessagesFromPrivate",
+    createNewMessagesFromPrivate
   );
 
   socket.on("conversation:sendChat", sendChat);
