@@ -476,10 +476,10 @@ const getChatHistoryFromPrivate = async (conversation) => {
 
   console.log(msgIds);
 
-  // await ConversationModel.updateOne(
-  //   { _id: conversation?._id },
-  //   { $set: { messages: msgIds }, unreadCount: 0 }
-  // );
+  await ConversationModel.updateOne(
+    { _id: conversation?._id },
+    { $set: { messages: msgIds }, unreadCount: 0 }
+  );
 
   // await getOneConversation({ selectedChatId: conversation?.chat_id });
   // return await findOneConversation(id);
