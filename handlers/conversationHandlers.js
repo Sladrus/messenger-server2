@@ -1522,6 +1522,7 @@ module.exports = (io, socket) => {
           date: item?.date,
         };
         const newMessage = await MessageModel.create(messageDto);
+        console.log(newMessage);
         msgIds.push(newMessage?._id);
       });
       console.log(msgIds);
