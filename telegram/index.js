@@ -474,8 +474,6 @@ const getChatHistoryFromPrivate = async (conversation) => {
     msgIds.push(newMessage?._id);
   }
 
-  console.log(msgIds);
-
   await ConversationModel.updateOne(
     { _id: conversation?._id },
     { $set: { messages: msgIds }, unreadCount: 0 }
