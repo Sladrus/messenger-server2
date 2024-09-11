@@ -1529,7 +1529,7 @@ module.exports = (io, socket) => {
         const newMessage = await MessageModel.create(messageDto);
         msgIds.push(newMessage?._id);
       }
-
+      console.log("title", data?.title);
       await ConversationModel.updateOne(
         { _id: conversation?._id, title: data?.title || "Потерянный чат" },
         { $set: { messages: msgIds }, unreadCount: 0 }
