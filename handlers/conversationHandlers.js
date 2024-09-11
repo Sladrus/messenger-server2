@@ -1505,7 +1505,7 @@ module.exports = (io, socket) => {
         throw new Error(
           `Сообщения в чате ${conversation?.chat_id} отсутствуют`
         );
-
+      console.log("data", data);
       const msgIds = [];
 
       for (const item of data?.messages) {
