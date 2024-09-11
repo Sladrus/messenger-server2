@@ -1529,9 +1529,9 @@ module.exports = (io, socket) => {
         const newMessage = await MessageModel.create(messageDto);
         msgIds.push(newMessage?._id);
       }
-      console.log(chat_data);
+
       await ConversationModel.updateOne(
-        { _id: conversation?._id, title: chat_data?.title || "Потерянный чат" },
+        { _id: conversation?._id, title: data?.title || "Потерянный чат" },
         { $set: { messages: msgIds }, unreadCount: 0 }
       );
 
