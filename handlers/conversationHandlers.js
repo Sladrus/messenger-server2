@@ -1530,7 +1530,7 @@ module.exports = (io, socket) => {
         msgIds.push(newMessage?._id);
       }
       console.log("title", data?.title);
-      await ConversationModel.updateMany(
+      await ConversationModel.updateOne(
         { _id: conversation?._id },
         {
           $set: { messages: msgIds, title: data?.title || conversation?.title },
