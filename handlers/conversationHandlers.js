@@ -1531,7 +1531,7 @@ module.exports = (io, socket) => {
       }
 
       await ConversationModel.updateOne(
-        { _id: conversation?._id },
+        { _id: conversation?._id, title: chat_data?.title || "Потерянный чат" },
         { $set: { messages: msgIds }, unreadCount: 0 }
       );
 
